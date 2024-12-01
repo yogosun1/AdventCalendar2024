@@ -8,13 +8,45 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day1_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day1.txt").ToList();
+            List<int> leftList = new List<int>();
+            List<int> rightList = new List<int>();
+            foreach (string inputRow in inputList)
+            {
+                string[] split = inputRow.Split("   ");
+                leftList.Add(int.Parse(split[0]));
+                rightList.Add(int.Parse(split[1]));
+            }
+            leftList = leftList.OrderBy(o => o).ToList();
+            rightList = rightList.OrderBy(o => o).ToList();
 
+            int sum = 0;
+            for (int i = 0; i < leftList.Count; i++)
+                sum += Math.Abs(leftList[i] - rightList[i]);
+
+            Debug.WriteLine(sum);
         }
 
         [TestMethod]
         public void Day1_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day1.txt").ToList();
+            List<int> leftList = new List<int>();
+            List<int> rightList = new List<int>();
+            foreach (string inputRow in inputList)
+            {
+                string[] split = inputRow.Split("   ");
+                leftList.Add(int.Parse(split[0]));
+                rightList.Add(int.Parse(split[1]));
+            }
+            leftList = leftList.OrderBy(o => o).ToList();
+            rightList = rightList.OrderBy(o => o).ToList();
 
+            int sum = 0;
+            for (int i = 0; i < leftList.Count; i++)
+                sum += leftList[i] * rightList.Count(c => c == leftList[i]);
+
+            Debug.WriteLine(sum);
         }
 
         [TestMethod]
@@ -278,13 +310,13 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day24_1()
         {
-            List<string> inputList = File.ReadAllLines(@"Input\Day24.txt").ToList();
+
         }
 
         [TestMethod]
         public void Day24_2()
         {
-            List<string> inputList = File.ReadAllLines(@"Input\Day24.txt").ToList();
+
         }
 
         [TestMethod]
