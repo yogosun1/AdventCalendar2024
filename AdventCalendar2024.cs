@@ -19,11 +19,9 @@ namespace AdventCalendar2024
             }
             leftList = leftList.OrderBy(o => o).ToList();
             rightList = rightList.OrderBy(o => o).ToList();
-
             int sum = 0;
             for (int i = 0; i < leftList.Count; i++)
                 sum += Math.Abs(leftList[i] - rightList[i]);
-
             Debug.WriteLine(sum);
         }
 
@@ -39,13 +37,8 @@ namespace AdventCalendar2024
                 leftList.Add(int.Parse(split[0]));
                 rightList.Add(int.Parse(split[1]));
             }
-            leftList = leftList.OrderBy(o => o).ToList();
-            rightList = rightList.OrderBy(o => o).ToList();
-
             int sum = 0;
-            for (int i = 0; i < leftList.Count; i++)
-                sum += leftList[i] * rightList.Count(c => c == leftList[i]);
-
+            leftList.ForEach(e => sum += e * rightList.Count(c => c == e));
             Debug.WriteLine(sum);
         }
 
