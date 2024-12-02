@@ -45,13 +45,78 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day2_1()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day2.txt").ToList();
+            List<List<int>> reportList = new List<List<int>>();
+            inputList.ForEach(e => reportList.Add(e.Split(" ").Select(s => int.Parse(s)).ToList()));
+            int safeCount = 0;
+            foreach (List<int> report in reportList)
+            {
+                int direction = 0; // 1 = increasing, 2 = decreasing
+                bool isSafe = true;
+                for (int i = 0; i < (report.Count - 1); i++)
+                {
+                    if (report[i] == report[i + 1] || Math.Abs(report[i] - report[i + 1]) > 3)
+                        isSafe = false;
+                    if (i == 0)
+                    {
+                        direction = report[i] < report[i + 1] ? 1 : 2;
+                        continue;
+                    }
+                    if (direction == 1 && report[i] - report[i + 1] > 0)
+                        isSafe = false;
+                    if (direction == 2 && report[i] - report[i + 1] < 0)
+                        isSafe = false;
+                }
+                if (isSafe)
+                    safeCount++;
+            }
+            Debug.WriteLine(safeCount);
         }
 
         [TestMethod]
         public void Day2_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day2.txt").ToList();
+            List<List<int>> reportList = new List<List<int>>();
+            inputList.ForEach(e => reportList.Add(e.Split(" ").Select(s => int.Parse(s)).ToList()));
+            int safeCount = 0;
+            foreach (List<int> report in reportList)
+            {
+                string reportText = string.Join(' ', report);
+                int direction = (report.Take(report.Count / 2).Sum() / (report.Count / 2))
+                    < (report.Skip(report.Count / 2).Sum() / (report.Skip(report.Count / 2).Count()))
+                    ? 1 : 2; // 1 = increasing, 2 = decreasing
+                bool isSafe = Day2IsSafe(report, direction);
+                if (!isSafe)
+                {
+                    for (int i = 0; i < report.Count; i++)
+                    {
+                        int[] reportAttempt = new int[report.Count];
+                        report.CopyTo(reportAttempt);
+                        List<int> reportAttemptList = reportAttempt.ToList();
+                        reportAttemptList.RemoveAt(i);
+                        isSafe = Day2IsSafe(reportAttemptList, direction);
+                        if (isSafe)
+                            break;
+                    }
+                }
+                if (isSafe)
+                    safeCount++;
+            }
+            Debug.WriteLine(safeCount); // 373
+        }
 
+        private bool Day2IsSafe(List<int> report, int direction)
+        {
+            for (int i = 0; i < (report.Count - 1); i++)
+            {
+                if ((report[i] == report[i + 1])
+                    || (Math.Abs(report[i] - report[i + 1]) > 3)
+                    || (direction == 1 && report[i] - report[i + 1] > 0)
+                    || (direction == 2 && report[i] - report[i + 1] < 0))
+                    return false;
+            }
+            return true;
         }
 
         [TestMethod]
