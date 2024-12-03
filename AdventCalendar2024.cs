@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace AdventCalendar2024
 {
@@ -122,13 +123,41 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day3_1()
         {
-
+            string input = File.ReadAllText(@"Input\Day3.txt");
+            MatchCollection matches = Regex.Matches(input, @"mul\(\d{1,3},\d{1,3}\)");
+            int sum = 0;
+            foreach (var match in matches.ToList())
+            {
+                string[] splitString = match.Value.Split(',');
+                int value1 = int.Parse(new string(splitString[0].Where(w => char.IsDigit(w)).ToArray()));
+                int value2 = int.Parse(new string(splitString[1].Where(w => char.IsDigit(w)).ToArray()));
+                sum += value1 * value2;
+            }
+            Debug.WriteLine(sum);
         }
 
         [TestMethod]
         public void Day3_2()
         {
-
+            string input = File.ReadAllText(@"Input\Day3.txt");
+            MatchCollection matches = Regex.Matches(input, @"mul\(\d{1,3},\d{1,3}\)|do\(\)|don't\(\)");
+            int sum = 0;
+            bool doCalculation = true;
+            foreach (var match in matches.ToList())
+            {
+                if (match.Value == "do()")
+                    doCalculation = true;
+                else if (match.Value == "don't()")
+                    doCalculation = false;
+                else if (doCalculation)
+                {
+                    string[] splitString = match.Value.Split(',');
+                    int value1 = int.Parse(new string(splitString[0].Where(w => char.IsDigit(w)).ToArray()));
+                    int value2 = int.Parse(new string(splitString[1].Where(w => char.IsDigit(w)).ToArray()));
+                    sum += value1 * value2;
+                }
+            }
+            Debug.WriteLine(sum);
         }
 
         [TestMethod]
