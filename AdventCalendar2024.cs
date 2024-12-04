@@ -163,7 +163,96 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day4_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day4Test.txt").ToList();
+            //List<List<char>> wordList = new List<List<char>>();
+            //foreach (string input in inputList)
+            //{
+            //    List<char> row = new List<char>();
+            //    input.ToList().ForEach(e => row.Add(e));
+            //    wordList.Add(row);
+            //}
+            //int wordCount = 0;
+            //string wordSearch = "XMAS";
+            //wordCount += Day4SearchWord(wordList, wordSearch);
+            //wordList = MathHelpers.Rotate2DArray(wordList);
+            //wordCount += Day4SearchWord(wordList, wordSearch);
+            //wordList = MathHelpers.Rotate2DArray(wordList);
+            //wordCount += Day4SearchWord(wordList, wordSearch);
+            //wordList = MathHelpers.Rotate2DArray(wordList);
+            //wordCount += Day4SearchWord(wordList, wordSearch);
 
+
+            List<List<char>> wordList = new List<List<char>>();
+            foreach (string input in inputList)
+            {
+                List<char> row = new List<char>();
+                input.ToList().ForEach(e => row.Add(e));
+                wordList.Add(row);
+            }
+            int wordCount = 0;
+            string wordSearch = "XMAS";
+            char[,] array = wordList.ToMultiArray();
+            wordCount += Day4SearchWord(array, wordSearch);
+            char[,] arrayRotated = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+            wordCount += Day4SearchWord(array, wordSearch);
+            array = MathHelpers.Rotate45Degrees(array);
+
+            Debug.WriteLine(wordCount);
+        }
+
+        private void Day4Print(List<List<char>> wordList)
+        {
+            wordList.ForEach(e => Debug.WriteLine(new string(e.ToArray())));
+        }
+
+        private void Day4Print(char[,] array)
+        {
+            for (int r = 0; r < array.GetLength(0); r++)
+            {
+                string row = string.Empty;
+                for (int c = 0; c < array.GetLength(1); c++)
+                    row += array[r, c];
+                Debug.WriteLine(row);
+            }
+        }
+
+        private int Day4SearchWord(char[,] wordList, string wordSearch)
+        {
+            int wordCount = 0;
+            int currentWordIndex = 0;
+            for (int row = 0; row < wordList.GetLength(0); row++)
+            {
+                for (int column = 0; column < wordList.GetLength(1); column++)
+                {
+                    if (wordList[row,column] == wordSearch[currentWordIndex])
+                    {
+                        if ((currentWordIndex + 1) == wordSearch.Count())
+                        {
+                            wordCount++;
+                            currentWordIndex = 0;
+                        }
+                        else if ((currentWordIndex + 1) < wordSearch.Count())
+                            currentWordIndex++;
+                    }
+                    else if (wordList[row,column] == wordSearch[0])
+                        currentWordIndex = 1;
+                    else
+                        currentWordIndex = 0;
+                }
+            }
+            return wordCount;
         }
 
         [TestMethod]
