@@ -164,6 +164,94 @@ namespace AdventCalendar2024
         public void Day4_1()
         {
             List<string> inputList = File.ReadAllLines(@"Input\Day4Test.txt").ToList();
+            List<Day4Char> wordList = new List<Day4Char>();
+            int i = 0, j = 0;
+            foreach (string input in inputList)
+            {
+                input.ToList().ForEach(e => { wordList.Add(new Day4Char { x = i, y = j, Value = e }); i++; });
+                j++;
+            }
+            int wordCount = 0;
+            string wordSearch = "XMAS";
+
+            foreach (Day4Char day4Char in wordList)
+            {
+                if (day4Char.Value == wordSearch[0])
+                {
+
+                }
+            }
+
+            Debug.WriteLine(wordCount);
+        }
+
+        private bool Day4SearchWord2(List<List<char>> wordList, int x, int y, string wordSearch, int wordIndex)
+        {
+            //if (wordSearch.Count() == wordIndex)
+            //    return true;
+
+            wordList
+
+            wordIndex++;
+
+
+
+        }
+
+        private class Day4Char
+        {
+            public int x { get; set; }
+            public int y { get; set; }
+            public Char Value { get; set; }
+        }
+
+        private void Day4Print(List<List<char>> wordList)
+        {
+            wordList.ForEach(e => Debug.WriteLine(new string(e.ToArray())));
+        }
+
+        private void Day4Print(char[,] array)
+        {
+            for (int r = 0; r < array.GetLength(0); r++)
+            {
+                string row = string.Empty;
+                for (int c = 0; c < array.GetLength(1); c++)
+                    row += array[r, c];
+                Debug.WriteLine(row);
+            }
+        }
+
+        private int Day4SearchWord(char[,] wordList, string wordSearch)
+        {
+            int wordCount = 0;
+            int currentWordIndex = 0;
+            for (int row = 0; row < wordList.GetLength(0); row++)
+            {
+                for (int column = 0; column < wordList.GetLength(1); column++)
+                {
+                    if (wordList[row, column] == wordSearch[currentWordIndex])
+                    {
+                        if ((currentWordIndex + 1) == wordSearch.Count())
+                        {
+                            wordCount++;
+                            currentWordIndex = 0;
+                        }
+                        else if ((currentWordIndex + 1) < wordSearch.Count())
+                            currentWordIndex++;
+                    }
+                    else if (wordList[row, column] == wordSearch[0])
+                        currentWordIndex = 1;
+                    else
+                        currentWordIndex = 0;
+                }
+            }
+            return wordCount;
+        }
+
+        [TestMethod]
+        public void Day4_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day4Test.txt").ToList();
             //List<List<char>> wordList = new List<List<char>>();
             //foreach (string input in inputList)
             //{
