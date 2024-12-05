@@ -253,8 +253,28 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day5_1()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day5Test.txt").ToList();
+            List<List<int>> printList = new List<List<int>>();
+            List<Day5PrintRule> printRuleList = new List<Day5PrintRule>();
+            foreach (string input in inputList)
+            {
+                if (input.Contains('|'))
+                {
+                    string[] split = input.Split('|');
+                    printRuleList.Add(new Day5PrintRule { Page = int.Parse(split[0]), Rule = int.Parse(split[1]) });
+                }
+                else if (input.Length > 0)
+                    printList.Add(input.Split(',').Select(s => int.Parse(s)).ToList());
+            }
         }
+
+        private class Day5PrintRule
+        {
+            public int Page { get; set; }
+            public int Rule { get; set; }
+        }
+
+
 
         [TestMethod]
         public void Day5_2()
