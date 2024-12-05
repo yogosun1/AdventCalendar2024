@@ -253,8 +253,8 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day5_1()
         {
-            List<string> inputList = File.ReadAllLines(@"Input\Day5Test.txt").ToList();
-            List<List<int>> printList = new List<List<int>>();
+            List<string> inputList = File.ReadAllLines(@"Input\Day5.txt").ToList();
+            List<List<Day5Page>> printList = new List<List<Day5Page>>();
             List<Day5PrintRule> printRuleList = new List<Day5PrintRule>();
             foreach (string input in inputList)
             {
@@ -264,8 +264,28 @@ namespace AdventCalendar2024
                     printRuleList.Add(new Day5PrintRule { Page = int.Parse(split[0]), Rule = int.Parse(split[1]) });
                 }
                 else if (input.Length > 0)
-                    printList.Add(input.Split(',').Select(s => int.Parse(s)).ToList());
+                {
+                    List<Day5Page> pageRow = new List<Day5Page>();
+                    List<int> pageList = input.Split(',').Select(s => int.Parse(s)).ToList();
+                    int pageIndex = 0;
+                    pageList.ForEach(e => pageRow.Add(new Day5Page { Number = e, PrintIndex = pageIndex++ }));
+                    printList.Add(pageRow);
+                }
             }
+            int middlePageSum = 0;
+            foreach (List<Day5Page> pageRow in printList)
+            {
+                bool isValid = true;
+                foreach (Day5Page page in pageRow)
+                {
+                    List<Day5PrintRule> pageRuleList = printRuleList.Where(w => w.Page == page.Number).ToList();
+                    if (pageRow.Any(w => w.PrintIndex < page.PrintIndex && pageRuleList.Select(s => s.Rule).Contains(w.Number)))
+                        isValid = false;
+                }
+                if (isValid)
+                    middlePageSum += pageRow[pageRow.Count() / 2].Number;
+            }
+            Debug.WriteLine(middlePageSum);
         }
 
         private class Day5PrintRule
@@ -274,12 +294,58 @@ namespace AdventCalendar2024
             public int Rule { get; set; }
         }
 
-
+        private class Day5Page
+        {
+            public int PrintIndex { get; set; }
+            public int Number { get; set; }
+        }
 
         [TestMethod]
         public void Day5_2()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day5.txt").ToList();
+            List<List<Day5Page>> printList = new List<List<Day5Page>>();
+            List<Day5PrintRule> printRuleList = new List<Day5PrintRule>();
+            foreach (string input in inputList)
+            {
+                if (input.Contains('|'))
+                {
+                    string[] split = input.Split('|');
+                    printRuleList.Add(new Day5PrintRule { Page = int.Parse(split[0]), Rule = int.Parse(split[1]) });
+                }
+                else if (input.Length > 0)
+                {
+                    List<Day5Page> pageRow = new List<Day5Page>();
+                    List<int> pageList = input.Split(',').Select(s => int.Parse(s)).ToList();
+                    int pageIndex = 0;
+                    pageList.ForEach(e => pageRow.Add(new Day5Page { Number = e, PrintIndex = pageIndex++ }));
+                    printList.Add(pageRow);
+                }
+            }
+            int middlePageSum = 0;
+            foreach (List<Day5Page> pageRow in printList)
+            {
+                bool isValid = true;
+                foreach (Day5Page page in pageRow)
+                {
+                    List<Day5PrintRule> pageRuleList = printRuleList.Where(w => w.Page == page.Number).ToList();
+                    if (pageRow.Any(w => w.PrintIndex < page.PrintIndex && pageRuleList.Select(s => s.Rule).Contains(w.Number)))
+                        isValid = false;
+                }
+                if (!isValid)
+                {
+                    List<Day5Page> orderedPageRow = new List<Day5Page>();
+                    foreach (Day5Page page in pageRow)
+                    {
+                        List<int> rulePages = printRuleList.Where(w => w.Page == page.Number).Select(s => s.Rule).ToList();
+                        int insertIndex = orderedPageRow.Where(w => rulePages.Contains(w.Number)).OrderBy(o => o.PrintIndex).Select(s => (int?)s.PrintIndex).FirstOrDefault() ?? orderedPageRow.Count;
+                        orderedPageRow.Where(w => w.PrintIndex >= insertIndex).ToList().ForEach(e => e.PrintIndex++);
+                        orderedPageRow.Insert(insertIndex, new Day5Page { Number = page.Number, PrintIndex = insertIndex });
+                    }
+                    middlePageSum += orderedPageRow[orderedPageRow.Count() / 2].Number;
+                }
+            }
+            Debug.WriteLine(middlePageSum);
         }
 
         [TestMethod]
