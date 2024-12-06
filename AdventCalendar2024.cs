@@ -351,13 +351,171 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day6_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day6.txt").ToList();
+            List<Day6Position> positionList = new List<Day6Position>();
+            int x = 0, y = 0;
+            int startX = 0, startY = 0;
+            int currentDirectionX = 0, currentDirectionY = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e =>
+                {
+                    if (new char[] { '<', '>', '^', 'v' }.Contains(e))
+                    {
+                        startX = x;
+                        startY = y;
+                        if (e == '<')
+                            currentDirectionX = -1;
+                        else if (e == '>')
+                            currentDirectionX = 1;
+                        else if (e == '^')
+                            currentDirectionY = -1;
+                        else if (e == 'v')
+                            currentDirectionY = 1;
+                    }
+                    positionList.Add(new Day6Position { X = x++, Y = y, IsObstacle = e == '#', Visited = false });
+                });
+                y++;
+            }
 
+            Day6Position currentPos = positionList.First(w => w.X == startX && w.Y == startY);
+            while (currentPos != null)
+            {
+                currentPos.Visited = true;
+                Day6Position nextPos = positionList.FirstOrDefault(w => w.X == (currentPos.X + currentDirectionX) 
+                    && w.Y == (currentPos.Y + currentDirectionY));
+                while (nextPos != null && nextPos.IsObstacle)
+                {
+                    if (currentDirectionX == -1)
+                    {
+                        currentDirectionX = 0;
+                        currentDirectionY = -1;
+                    }
+                    else if (currentDirectionX == 1)
+                    {
+                        currentDirectionX = 0;
+                        currentDirectionY = 1;
+                    }
+                    else if (currentDirectionY == -1)
+                    {
+                        currentDirectionX = 1;
+                        currentDirectionY = 0;
+                    }
+                    else if (currentDirectionY == 1)
+                    {
+                        currentDirectionX = -1;
+                        currentDirectionY = 0;
+                    }
+                    nextPos = positionList.FirstOrDefault(w => w.X == (currentPos.X + currentDirectionX)
+                        && w.Y == (currentPos.Y + currentDirectionY));
+                }
+                currentPos = nextPos;
+            }
+            Debug.WriteLine(positionList.Count(c => c.Visited));
+        }
+
+        private class Day6Position
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool IsObstacle { get; set; }
+            public bool Visited { get; set; }
+        }
+
+        private class Day6Position2
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool IsObstacle { get; set; }
+            public List<string> VisitedList { get; set; }
         }
 
         [TestMethod]
-        public void Day6_2()
+        public void Day6_2() // Needs optimization
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day6.txt").ToList();
+            List<Day6Position2> positionList = new List<Day6Position2>();
+            int x = 0, y = 0;
+            int startX = 0, startY = 0;
+            int startDirectionX = 0, startDirectionY = 0;
+            int currentDirectionX = 0, currentDirectionY = 0;
+            int maxX = inputList.First().Count();
+            int maxY = inputList.Count();
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e =>
+                {
+                    if (new char[] { '<', '>', '^', 'v' }.Contains(e))
+                    {
+                        startX = x;
+                        startY = y;
+                        if (e == '<')
+                            startDirectionX = -1;
+                        else if (e == '>')
+                            startDirectionX = 1;
+                        else if (e == '^')
+                            startDirectionY = -1;
+                        else if (e == 'v')
+                            startDirectionY = 1;
+                    }
+                    positionList.Add(new Day6Position2 { X = x++, Y = y, IsObstacle = e == '#', VisitedList = new List<string>() });
+                });
+                y++;
+            }
 
+            int loopCount = 0;
+            Day6Position2 startPos = positionList.First(w => w.X == startX && w.Y == startY);
+            Day6Position2 nextPos = null;
+            Day6Position2 currentPos = null;
+            foreach (Day6Position2 newObstacle in positionList.Where(w => !w.IsObstacle && !(w.X == startPos.X && w.Y == startPos.Y))
+                .OrderBy(o => o.Y).ThenBy(t => t.X))
+            {
+                positionList.ForEach(e => e.VisitedList.Clear());
+                currentPos = startPos;
+                newObstacle.IsObstacle = true;
+                currentDirectionX = startDirectionX;
+                currentDirectionY = startDirectionY;
+                while (currentPos != null)
+                {
+                    if (currentPos.VisitedList.Contains(currentDirectionX.ToString() + currentDirectionY.ToString()))
+                    {
+                        loopCount++;
+                        break;
+                    }
+                    currentPos.VisitedList.Add(currentDirectionX.ToString() + currentDirectionY.ToString());
+                    nextPos = positionList.FirstOrDefault(w => w.X == (currentPos.X + currentDirectionX) && w.Y == (currentPos.Y + currentDirectionY));
+                    while (nextPos != null && nextPos.IsObstacle)
+                    {
+                        if (currentDirectionX == -1)
+                        {
+                            currentDirectionX = 0;
+                            currentDirectionY = -1;
+                        }
+                        else if (currentDirectionX == 1)
+                        {
+                            currentDirectionX = 0;
+                            currentDirectionY = 1;
+                        }
+                        else if (currentDirectionY == -1)
+                        {
+                            currentDirectionX = 1;
+                            currentDirectionY = 0;
+                        }
+                        else if (currentDirectionY == 1)
+                        {
+                            currentDirectionX = -1;
+                            currentDirectionY = 0;
+                        }
+                        nextPos = positionList.FirstOrDefault(w => w.X == (currentPos.X + currentDirectionX)
+                            && w.Y == (currentPos.Y + currentDirectionY));
+                    }
+                    currentPos = nextPos;
+                }
+                newObstacle.IsObstacle = false;
+            }
+            Debug.WriteLine(loopCount); // 1705
         }
 
         [TestMethod]
