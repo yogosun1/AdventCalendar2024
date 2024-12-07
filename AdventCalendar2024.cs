@@ -521,13 +521,92 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day7_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day7.txt").ToList();
+            List<Day7Test> testList = new List<Day7Test>();
+            foreach (string input in inputList)
+            {
+                Day7Test test = new Day7Test();
+                string[] inputSplit = input.Split(':');
+                test.Result = long.Parse(inputSplit[0]);
+                test.ValueList = inputSplit[1].Trim().Split(' ').Select(s => int.Parse(s)).ToList();
+                testList.Add(test);
+            }
+            long sum = 0;
+            foreach (Day7Test test in testList)
+            {
+                if (Day7_1CalculationTest(test.Result, test.ValueList.First(), 1, test.ValueList.Skip(1).ToList())
+                    || Day7_1CalculationTest(test.Result, test.ValueList.First(), 2, test.ValueList.Skip(1).ToList()))
+                    sum += test.Result;
+            }
+            Debug.WriteLine(sum);
+        }
 
+        private bool Day7_1CalculationTest(long result, long currentValue, int operation, List<int> remainingValues)
+        {
+            if (remainingValues.Count == 0)
+                return result == currentValue;
+            if (currentValue > result)
+                return false;
+            int nextValue = remainingValues.First();
+            if (operation == 1) // +
+                currentValue += nextValue;
+            else // *
+                currentValue *= nextValue;
+            bool test = Day7_1CalculationTest(result, currentValue, 1, remainingValues.Skip(1).ToList());
+            if (!test)
+                test = Day7_1CalculationTest(result, currentValue, 2, remainingValues.Skip(1).ToList());
+            return test;
+        }
+
+        private class Day7Test
+        {
+            public long Result { get; set; }
+            public List<int> ValueList { get; set; }
         }
 
         [TestMethod]
         public void Day7_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day7.txt").ToList();
+            List<Day7Test> testList = new List<Day7Test>();
+            foreach (string input in inputList)
+            {
+                Day7Test test = new Day7Test();
+                string[] inputSplit = input.Split(':');
+                test.Result = long.Parse(inputSplit[0]);
+                test.ValueList = inputSplit[1].Trim().Split(' ').Select(s => int.Parse(s)).ToList();
+                testList.Add(test);
+            }
+            long sum = 0;
+            foreach (Day7Test test in testList)
+            {
+                if (Day7_2CalculationTest(test.Result, test.ValueList.First(), 1, test.ValueList.Skip(1).ToList())
+                    || Day7_2CalculationTest(test.Result, test.ValueList.First(), 2, test.ValueList.Skip(1).ToList())
+                    || Day7_2CalculationTest(test.Result, test.ValueList.First(), 3, test.ValueList.Skip(1).ToList()))
+                    sum += test.Result;
+            }
+            Debug.WriteLine(sum);
+        }
 
+        private bool Day7_2CalculationTest(long result, long currentValue, int operation, List<int> remainingValues)
+        {
+            if (remainingValues.Count == 0)
+                return result == currentValue;
+            if (currentValue > result)
+                return false;
+            int nextValue = remainingValues.First();
+            if (operation == 1) // +
+                currentValue += nextValue;
+            else if (operation == 2) // *
+                currentValue *= nextValue;
+            else // ||
+                currentValue = long.Parse(currentValue.ToString() + nextValue.ToString());
+            bool test = Day7_2CalculationTest(result, currentValue, 1, remainingValues.Skip(1).ToList());
+            if (!test)
+                test = Day7_2CalculationTest(result, currentValue, 2, remainingValues.Skip(1).ToList());
+            if (!test)
+                test = Day7_2CalculationTest(result, currentValue, 3, remainingValues.Skip(1).ToList());
+            return test;
         }
 
         [TestMethod]
