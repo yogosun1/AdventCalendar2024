@@ -383,7 +383,7 @@ namespace AdventCalendar2024
             while (currentPos != null)
             {
                 currentPos.Visited = true;
-                Day6Position nextPos = positionList.FirstOrDefault(w => w.X == (currentPos.X + currentDirectionX) 
+                Day6Position nextPos = positionList.FirstOrDefault(w => w.X == (currentPos.X + currentDirectionX)
                     && w.Y == (currentPos.Y + currentDirectionY));
                 while (nextPos != null && nextPos.IsObstacle)
                 {
@@ -612,13 +612,96 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day8_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day8.txt").ToList();
+            List<Day8Position> positionList = new List<Day8Position>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e => positionList.Add(new Day8Position
+                {
+                    X = x++,
+                    Y = y,
+                    AntennaName = ((e == '.' || e == '#') ? null : e),
+                    IsAntinode = false,
+                    IsAntenna = ((e == '.' || e == '#') ? false : true)
+                }));
+                y++;
+            }
 
+            List<char> signalList = positionList.Where(w => w.IsAntenna).Select(s => (char)s.AntennaName).Distinct().ToList();
+            foreach (char signal in signalList)
+            {
+                List<Day8Position> antennaList = positionList.Where(w => w.AntennaName == signal).ToList();
+                foreach (Day8Position antenna in antennaList)
+                {
+                    foreach (Day8Position otherAntenna in antennaList.Where(w => !(w.X == antenna.X && w.Y == antenna.Y)))
+                    {
+                        Day8Position antinode = positionList.FirstOrDefault(w => w.X == (otherAntenna.X + otherAntenna.X - antenna.X)
+                            && w.Y == (otherAntenna.Y + otherAntenna.Y - antenna.Y));
+                        if (antinode != null)
+                            antinode.IsAntinode = true;
+                    }
+                }
+            }
+            Debug.WriteLine(positionList.Count(c => c.IsAntinode));
+        }
+
+        private class Day8Position
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public char? AntennaName { get; set; }
+            public bool IsAntenna { get; set; }
+            public bool IsAntinode { get; set; }
         }
 
         [TestMethod]
         public void Day8_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day8.txt").ToList();
+            List<Day8Position> positionList = new List<Day8Position>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e => positionList.Add(new Day8Position
+                {
+                    X = x++,
+                    Y = y,
+                    AntennaName = ((e == '.' || e == '#') ? null : e),
+                    IsAntinode = false,
+                    IsAntenna = ((e == '.' || e == '#') ? false : true)
+                }));
+                y++;
+            }
 
+            List<char> signalList = positionList.Where(w => w.IsAntenna).Select(s => (char)s.AntennaName).Distinct().ToList();
+            foreach (char signal in signalList)
+            {
+                List<Day8Position> antennaList = positionList.Where(w => w.AntennaName == signal).ToList();
+                foreach (Day8Position antenna in antennaList)
+                {
+                    foreach (Day8Position otherAntenna in antennaList.Where(w => !(w.X == antenna.X && w.Y == antenna.Y)))
+                    {
+                        Day8Position antinode = otherAntenna;
+                        int distanceX = otherAntenna.X - antenna.X;
+                        int distanceY = otherAntenna.Y - antenna.Y;
+                        while (antinode != null)
+                        {
+                            antinode.IsAntinode = true;
+                            antinode = positionList.FirstOrDefault(w => w.X == antinode.X + distanceX && w.Y == antinode.Y + distanceY);
+                        }
+                        antinode = antenna;
+                        while (antinode != null)
+                        {
+                            antinode.IsAntinode = true;
+                            antinode = positionList.FirstOrDefault(w => w.X == antinode.X - distanceX && w.Y == antinode.Y - distanceY);
+                        }
+                    }
+                }
+            }
+            Debug.WriteLine(positionList.Count(c => c.IsAntinode));
         }
 
         [TestMethod]
