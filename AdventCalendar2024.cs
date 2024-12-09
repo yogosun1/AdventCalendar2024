@@ -707,13 +707,105 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day9_1()
         {
-
+            string input = File.ReadAllLines(@"Input\Day9.txt").First();
+            List<int> diskData = new List<int>();
+            int fileId = 1;
+            int i = 0;
+            foreach (char c in input)
+            {
+                int val = int.Parse(c.ToString());
+                if (i % 2 == 0) // file
+                {
+                    for (int x = 0; x < val; x++)
+                        diskData.Add(fileId);
+                    fileId++;
+                }
+                else // free space
+                    for (int x = 0; x < val; x++)
+                        diskData.Add(0);
+                i++;
+            }
+            while (diskData.Contains(0))
+            {
+                int last = diskData.Last();
+                diskData.RemoveAt(diskData.Count() - 1);
+                if (last > 0)
+                {
+                    int index = diskData.IndexOf(0);
+                    diskData[index] = last;
+                }
+            }
+            long checksum = 0;
+            for (int x = 0; x < diskData.Count(); x++)
+                checksum += x * (diskData[x] - 1);
+            Debug.WriteLine(checksum);
         }
 
         [TestMethod]
         public void Day9_2()
         {
-
+            string input = File.ReadAllLines(@"Input\Day9.txt").First();
+            List<int> diskData = new List<int>();
+            int fileId = 1;
+            int i = 0;
+            foreach (char c in input)
+            {
+                int val = int.Parse(c.ToString());
+                if (i % 2 == 0) // file
+                {
+                    for (int x = 0; x < val; x++)
+                        diskData.Add(fileId);
+                    fileId++;
+                }
+                else // free space
+                    for (int x = 0; x < val; x++)
+                        diskData.Add(0);
+                i++;
+            }
+            for (int x = diskData.Max(); x > 0; x--)
+            {
+                int currentLocation = diskData.IndexOf(x);
+                int count = diskData.Where(w => w == x).Count();
+                int emptyCount = 0;
+                int moveIndex = -1;
+                for (int y = 0; y < diskData.Count(); y++)
+                {
+                    if (currentLocation <= y)
+                    {
+                        emptyCount = 0;
+                        moveIndex = -1;
+                        break;
+                    }
+                    if (diskData[y] == 0)
+                    {
+                        if (emptyCount == 0)
+                            moveIndex = y;
+                        emptyCount++;
+                    }
+                    else
+                    {
+                        emptyCount = 0;
+                        moveIndex = -1;
+                    }
+                    if (emptyCount == count)
+                        break;
+                }
+                if (moveIndex > -1)
+                {
+                    for (int p = 0; p < count; p++)
+                    {
+                        diskData[moveIndex + p] = x;
+                        diskData[diskData.LastIndexOf(x)] = 0;
+                    }
+                }
+            }
+            long checksum = 0;
+            for (int x = 0; x < diskData.Count(); x++)
+            {
+                if (diskData[x] > 0)
+                    checksum += x * (diskData[x] - 1);
+            }
+            Debug.WriteLine(checksum);
         }
 
         [TestMethod]
