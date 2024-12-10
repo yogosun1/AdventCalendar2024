@@ -811,13 +811,103 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day10_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day10.txt").ToList();
+            List<Day10Position> map = new List<Day10Position>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e => map.Add(new Day10Position
+                {
+                    X = x++,
+                    Y = y,
+                    Height = int.Parse(e.ToString()),
+                    Visisted = false
+                }));
+                y++;
+            }
+            int sum = 0;
+            foreach (Day10Position trailhead in map.Where(w => w.Height == 0))
+            {
+                Day10Step(map, trailhead);
+                sum += map.Count(c => c.Height == 9 && c.Visisted);
+                //Debug.WriteLine(trailhead.X + " " + trailhead.Y + " " + map.Count(c => c.Height == 9 && c.Visisted));
+                map.ForEach(e => e.Visisted = false);
+            }
+            Debug.WriteLine(sum);
+        }
 
+        private class Day10Position
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int Height { get; set; }
+            public bool Visisted { get; set; }
+        }
+
+        private void Day10Step(List<Day10Position> map, Day10Position currentPosition)
+        {
+            if (currentPosition.Height == 9)
+            {
+                currentPosition.Visisted = true;
+                return;
+            }
+            List<Day10Position> possibleSteps = map.Where(w => Math.Abs(w.X - currentPosition.X) + Math.Abs(w.Y - currentPosition.Y) == 1 
+            && w.Height == (currentPosition.Height + 1) && !w.Visisted).ToList();
+            foreach (Day10Position step in possibleSteps)
+                Day10Step(map, step);
+            return;
         }
 
         [TestMethod]
         public void Day10_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day10.txt").ToList();
+            List<Day10_2Position> map = new List<Day10_2Position>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e => map.Add(new Day10_2Position
+                {
+                    X = x++,
+                    Y = y,
+                    Height = int.Parse(e.ToString()),
+                    VisitedCount = 0
+                }));
+                y++;
+            }
+            int sum = 0;
+            foreach (Day10_2Position trailhead in map.Where(w => w.Height == 0))
+            {
+                Day10_2Step(map, trailhead);
+                sum += map.Where(c => c.Height == 9).Sum(s => s.VisitedCount);
+                Debug.WriteLine(trailhead.X + " " + trailhead.Y + " " + map.Where(c => c.Height == 9).Sum(s => s.VisitedCount));
+                map.ForEach(e => e.VisitedCount = 0);
+            }
+            Debug.WriteLine(sum);
+        }
 
+        private class Day10_2Position
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int Height { get; set; }
+            public int VisitedCount { get; set; }
+        }
+
+        private void Day10_2Step(List<Day10_2Position> map, Day10_2Position currentPosition)
+        {
+            if (currentPosition.Height == 9)
+            {
+                currentPosition.VisitedCount++;
+                return;
+            }
+            List<Day10_2Position> possibleSteps = map.Where(w => Math.Abs(w.X - currentPosition.X) + Math.Abs(w.Y - currentPosition.Y) == 1
+            && w.Height == (currentPosition.Height + 1)).ToList();
+            foreach (Day10_2Position step in possibleSteps)
+                Day10_2Step(map, step);
+            return;
         }
 
         [TestMethod]
