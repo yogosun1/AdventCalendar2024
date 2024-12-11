@@ -852,7 +852,7 @@ namespace AdventCalendar2024
                 currentPosition.Visisted = true;
                 return;
             }
-            List<Day10Position> possibleSteps = map.Where(w => Math.Abs(w.X - currentPosition.X) + Math.Abs(w.Y - currentPosition.Y) == 1 
+            List<Day10Position> possibleSteps = map.Where(w => Math.Abs(w.X - currentPosition.X) + Math.Abs(w.Y - currentPosition.Y) == 1
             && w.Height == (currentPosition.Height + 1) && !w.Visisted).ToList();
             foreach (Day10Position step in possibleSteps)
                 Day10Step(map, step);
@@ -913,13 +913,60 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day11_1()
         {
-
+            string inputList = File.ReadAllLines(@"Input\Day11.txt").First();
+            List<long> stoneList = inputList.Split(' ').Select(s => long.Parse(s)).ToList();
+            for (int i = 0; i < 25; i++)
+            {
+                List<long> newStoneList = new List<long>();
+                foreach (long stone in stoneList)
+                {
+                    if (stone == 0)
+                        newStoneList.Add(1);
+                    else if (stone.ToString().Count() % 2 == 0)
+                    {
+                        newStoneList.Add(long.Parse(stone.ToString().Substring(0, stone.ToString().Count() / 2)));
+                        newStoneList.Add(long.Parse(stone.ToString().Substring(stone.ToString().Count() / 2)));
+                    }
+                    else
+                        newStoneList.Add(stone * 2024);
+                }
+                stoneList = newStoneList;
+            }
+            Debug.WriteLine(stoneList.Count());
         }
 
         [TestMethod]
         public void Day11_2()
         {
+            string inputList = File.ReadAllLines(@"Input\Day11.txt").First();
+            List<long> stoneList = inputList.Split(' ').Select(s => long.Parse(s)).ToList();
+            long stoneCount = 0;
+            foreach (long stone in stoneList)
+                stoneCount += Day11Blink(stone, 0);
+            Debug.WriteLine(stoneCount); // 235571309320764
+        }
 
+        Dictionary<string, long> _day11_2KnownStones = new Dictionary<string, long>();
+
+        private long Day11Blink(long stone, int blinks)
+        {
+            long knownValue;
+            long stoneCount = 0;
+            if (_day11_2KnownStones.TryGetValue(stone + "_" + blinks, out knownValue))
+                return knownValue;
+            if (blinks == 75)
+                return 1;
+            if (stone == 0)
+                stoneCount = Day11Blink(stone + 1, blinks + 1);
+            else if (stone.ToString().Count() % 2 == 0)
+            {
+                stoneCount += Day11Blink(long.Parse(stone.ToString().Substring(0, stone.ToString().Count() / 2)), blinks + 1);
+                stoneCount += Day11Blink(long.Parse(stone.ToString().Substring(stone.ToString().Count() / 2)), blinks + 1);
+            }
+            else
+                stoneCount = Day11Blink(stone * 2024, blinks + 1);
+            _day11_2KnownStones.Add(stone + "_" + blinks, stoneCount);
+            return stoneCount;
         }
 
         [TestMethod]
