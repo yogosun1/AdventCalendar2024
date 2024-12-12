@@ -972,7 +972,147 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day12_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day12.txt").ToList();
+            List<Day12GardenPlot> gardenPlotList = new List<Day12GardenPlot>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e => gardenPlotList.Add(new Day12GardenPlot { X = x++, Y = y, Crop = e, RegionId = -1 }));
+                y++;
+            }
+            int newRegionId = -1;
+            while (gardenPlotList.Any(a => a.RegionId == -1))
+            {
+                newRegionId++;
+                Day12GardenPlot plot = gardenPlotList.First(w => w.RegionId == -1);
+                Day12DefineRegion(gardenPlotList, plot, newRegionId);
+            }
+            int sumCost = 0;
+            foreach (int regionId in gardenPlotList.Select(s => s.RegionId).Distinct())
+            {
+                List<Day12GardenPlot> region = gardenPlotList.Where(w => w.RegionId == regionId).ToList();
+                int area = region.Count();
+                int perimiter = 0;
+                foreach (Day12GardenPlot plot in region)
+                    perimiter += 4 - region.Where(w => Math.Abs(w.X - plot.X) + Math.Abs(w.Y - plot.Y) == 1).Count();
+                sumCost += area * perimiter;
+                Debug.WriteLine("RegionId: " + regionId + " Crop: " + region.First().Crop + " Area: " + area + " Perimiter: " + perimiter + " Cost: " + area * perimiter);
+            }
+            Debug.WriteLine(sumCost);
+        }
 
+        private void Day12DefineRegion(List<Day12GardenPlot> gardenPlotList, Day12GardenPlot plot, int regionId)
+        {
+            plot.RegionId = regionId;
+            List<Day12GardenPlot> neighbours = gardenPlotList.Where(w => Math.Abs(w.X - plot.X) + Math.Abs(w.Y - plot.Y) == 1 && w.Crop == plot.Crop && w.RegionId == -1).ToList();
+            foreach (Day12GardenPlot neighbour in neighbours)
+                Day12DefineRegion(gardenPlotList, neighbour, regionId);
+        }
+
+        public class Day12GardenPlot
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int RegionId { get; set; }
+            public Char Crop { get; set; }
+        }
+
+        [TestMethod]
+        public void Day12_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day12.txt").ToList();
+            List<Day12GardenPlot> gardenPlotList = new List<Day12GardenPlot>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.ToList().ForEach(e => gardenPlotList.Add(new Day12GardenPlot { X = x++, Y = y, Crop = e, RegionId = -1 }));
+                y++;
+            }
+            int newRegionId = -1;
+            while (gardenPlotList.Any(a => a.RegionId == -1))
+            {
+                newRegionId++;
+                Day12GardenPlot plot = gardenPlotList.First(w => w.RegionId == -1);
+                Day12DefineRegion(gardenPlotList, plot, newRegionId);
+            }
+            int sumCost = 0;
+            foreach (int regionId in gardenPlotList.Select(s => s.RegionId).Distinct())
+            {
+                List<Day12GardenPlot> region = gardenPlotList.Where(w => w.RegionId == regionId).ToList();
+                int area = region.Count();
+                int sides = 0;
+                for (y = region.Min(m => m.Y); y <= region.Max(m => m.Y); y++)
+                {
+                    bool topSideFound = false;
+                    bool bottomSideFound = false;
+                    for (x = region.Min(m => m.X); x <= region.Max(m => m.X); x++)
+                    {
+                        Day12GardenPlot plot = region.FirstOrDefault(w => w.X == x && w.Y == y);
+                        if (plot == null)
+                        {
+                            topSideFound = false;
+                            bottomSideFound = false;
+                        }
+                        else
+                        {
+                            bool topPlotExist = region.Any(w => w.X == plot.X && w.Y == (plot.Y - 1));
+                            bool bottomPlotExist = region.Any(w => w.X == plot.X && w.Y == (plot.Y + 1));
+                            if (!topSideFound && !topPlotExist)
+                            {
+                                sides++;
+                                topSideFound = true;
+                            }
+                            if (!bottomSideFound && !bottomPlotExist)
+                            {
+                                sides++;
+                                bottomSideFound = true;
+                            }
+                            if (topPlotExist)
+                                topSideFound = false;
+                            if (bottomPlotExist)
+                                bottomSideFound = false;
+                        }
+                    }
+                }
+                for (x = region.Min(m => m.X); x <= region.Max(m => m.X); x++)
+                {
+                    bool leftSideFound = false;
+                    bool rightSideFound = false;
+                    for (y = region.Min(m => m.Y); y <= region.Max(m => m.Y); y++)
+                    {
+                        Day12GardenPlot plot = region.FirstOrDefault(w => w.X == x && w.Y == y);
+                        if (plot == null)
+                        {
+                            leftSideFound = false;
+                            rightSideFound = false;
+                        }
+                        else
+                        {
+                            bool leftPlotExist = region.Any(w => w.X == (plot.X - 1) && w.Y == plot.Y);
+                            bool rightPlotExist = region.Any(w => w.X == (plot.X + 1) && w.Y == plot.Y);
+                            if (!leftSideFound && !leftPlotExist)
+                            {
+                                sides++;
+                                leftSideFound = true;
+                            }
+                            if (!rightSideFound && !rightPlotExist)
+                            {
+                                sides++;
+                                rightSideFound = true;
+                            }
+                            if (leftPlotExist)
+                                leftSideFound = false;
+                            if (rightPlotExist)
+                                rightSideFound = false;
+                        }
+                    }
+                }
+                sumCost += area * sides;
+                Debug.WriteLine("RegionId: " + regionId + " Crop: " + region.First().Crop + " Area: " + area + " Sides: " + sides + " Cost: " + area * sides);
+            }
+            Debug.WriteLine(sumCost);
         }
 
         [TestMethod]
