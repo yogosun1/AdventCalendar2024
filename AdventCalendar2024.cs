@@ -1118,13 +1118,111 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day13_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
+            bool newMachine = true;
+            List<Day13Machine> machineList = new List<Day13Machine>();
+            Day13Machine machinePrep = null;
+            foreach (string input in inputList)
+            {
+                if (newMachine)
+                {
+                    machinePrep = new Day13Machine();
+                    machinePrep.MinTokens = long.MaxValue;
+                    newMachine = false;
+                    machineList.Add(machinePrep);
+                }
+                if (input.Contains("Button A"))
+                {
+                    machinePrep.ButtonA_X = int.Parse(new string(input.Split(',')[0].Where(w => char.IsDigit(w)).ToArray()));
+                    machinePrep.ButtonA_Y = int.Parse(new string(input.Split(',')[1].Where(w => char.IsDigit(w)).ToArray()));
+                }
+                else if (input.Contains("Button B"))
+                {
+                    machinePrep.ButtonB_X = int.Parse(new string(input.Split(',')[0].Where(w => char.IsDigit(w)).ToArray()));
+                    machinePrep.ButtonB_Y = int.Parse(new string(input.Split(',')[1].Where(w => char.IsDigit(w)).ToArray()));
+                }
+                else if (input.Contains("Prize"))
+                {
+                    machinePrep.PrizeX = int.Parse(new string(input.Split(',')[0].Where(w => char.IsDigit(w)).ToArray()));
+                    machinePrep.PrizeY = int.Parse(new string(input.Split(',')[1].Where(w => char.IsDigit(w)).ToArray()));
+                }
+                else
+                    newMachine = true;
+            }
+            foreach (Day13Machine machine in machineList)
+            {
+                long x = 0, y = 0;
+                for (long b = 0; b <= 100; b++)
+                {
+                    for (long a = 0; a <= 100; a++)
+                    {
+                        x = b * machine.ButtonB_X + a * machine.ButtonA_X;
+                        y = b * machine.ButtonB_Y + a * machine.ButtonA_Y;
+                        if (x == machine.PrizeX && y == machine.PrizeY && ((a * 3 + b * 1) < machine.MinTokens))
+                            machine.MinTokens = (a * 3 + b * 1);
+                    }
+                }
+            }
+            Debug.WriteLine(machineList.Where(w => w.MinTokens != int.MaxValue).Sum(s => s.MinTokens));
+        }
 
+        private class Day13Machine
+        {
+            public long ButtonA_X { get; set; }
+            public long ButtonA_Y { get; set; }
+            public long ButtonB_X { get; set; }
+            public long ButtonB_Y { get; set; }
+            public long PrizeX { get; set; }
+            public long PrizeY { get; set; }
+            public long MinTokens { get; set; }
         }
 
         [TestMethod]
         public void Day13_2()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
+            bool newMachine = true;
+            List<Day13Machine> machineList = new List<Day13Machine>();
+            Day13Machine machinePrep = null;
+            foreach (string input in inputList)
+            {
+                if (newMachine)
+                {
+                    machinePrep = new Day13Machine();
+                    machinePrep.MinTokens = long.MaxValue;
+                    newMachine = false;
+                    machineList.Add(machinePrep);
+                }
+                if (input.Contains("Button A"))
+                {
+                    machinePrep.ButtonA_X = int.Parse(new string(input.Split(',')[0].Where(w => char.IsDigit(w)).ToArray()));
+                    machinePrep.ButtonA_Y = int.Parse(new string(input.Split(',')[1].Where(w => char.IsDigit(w)).ToArray()));
+                }
+                else if (input.Contains("Button B"))
+                {
+                    machinePrep.ButtonB_X = int.Parse(new string(input.Split(',')[0].Where(w => char.IsDigit(w)).ToArray()));
+                    machinePrep.ButtonB_Y = int.Parse(new string(input.Split(',')[1].Where(w => char.IsDigit(w)).ToArray()));
+                }
+                else if (input.Contains("Prize"))
+                {
+                    machinePrep.PrizeX = int.Parse(new string(input.Split(',')[0].Where(w => char.IsDigit(w)).ToArray())) + 10000000000000;
+                    machinePrep.PrizeY = int.Parse(new string(input.Split(',')[1].Where(w => char.IsDigit(w)).ToArray())) + 10000000000000;
+                }
+                else
+                    newMachine = true;
+            }
+            foreach (Day13Machine machine in machineList)
+            {
+                double delta = machine.ButtonA_X * machine.ButtonB_Y - machine.ButtonA_Y * machine.ButtonB_X;
+                if (delta == 0)
+                    continue;
+                double aPresses = (machine.ButtonB_Y * machine.PrizeX - machine.ButtonB_X * machine.PrizeY) / delta;
+                double bPresses = (machine.ButtonA_X * machine.PrizeY - machine.ButtonA_Y * machine.PrizeX) / delta;
+                if (aPresses % 1 != 0 || bPresses % 1 != 0)
+                    continue;
+                machine.MinTokens = (long)aPresses * 3 + (long)bPresses * 1;
+            }
+            Debug.WriteLine(machineList.Where(w => w.MinTokens != long.MaxValue).Sum(s => s.MinTokens));
         }
 
         [TestMethod]
