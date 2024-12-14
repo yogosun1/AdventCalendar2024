@@ -1228,13 +1228,93 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day14_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day14.txt").ToList();
+            List<Day14Robot> robotList = new List<Day14Robot>();
+            foreach (string input in inputList)
+            {
+                string[] inputSplit = input.Split(' ');
+                robotList.Add(new Day14Robot
+                {
+                    X = int.Parse(new string(inputSplit[0].Split(',')[0].Skip(2).ToArray())),
+                    Y = int.Parse(inputSplit[0].Split(',')[1]),
+                    VX = int.Parse(new string(inputSplit[1].Split(',')[0].Skip(2).ToArray())),
+                    VY = int.Parse(inputSplit[1].Split(',')[1]),
+                });
+            }
+            int maxX = 101;
+            int maxY = 103;
+            for (int i = 0; i < 100; i++)
+            {
+                foreach (Day14Robot robot in robotList)
+                {
+                    robot.X = (robot.X + robot.VX) % maxX;
+                    robot.Y = (robot.Y + robot.VY) % maxY;
+                    if (robot.X < 0)
+                        robot.X += maxX;
+                    if (robot.Y < 0)
+                        robot.Y += maxY;
+                }
+            }
+            int sumRobots = robotList.Count(w => w.X < maxX / 2 && w.Y < maxY / 2);
+            sumRobots *= robotList.Count(w => w.X < maxX / 2 && w.Y > maxY / 2);
+            sumRobots *= robotList.Count(w => w.X > maxX / 2 && w.Y < maxY / 2);
+            sumRobots *= robotList.Count(w => w.X > maxX / 2 && w.Y > maxY / 2);
+            Debug.WriteLine(sumRobots);
+        }
 
+        private class Day14Robot
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int VX { get; set; }
+            public int VY { get; set; }
         }
 
         [TestMethod]
         public void Day14_2()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day14.txt").ToList();
+            List<Day14Robot> robotList = new List<Day14Robot>();
+            foreach (string input in inputList)
+            {
+                string[] inputSplit = input.Split(' ');
+                robotList.Add(new Day14Robot
+                {
+                    X = int.Parse(new string(inputSplit[0].Split(',')[0].Skip(2).ToArray())),
+                    Y = int.Parse(inputSplit[0].Split(',')[1]),
+                    VX = int.Parse(new string(inputSplit[1].Split(',')[0].Skip(2).ToArray())),
+                    VY = int.Parse(inputSplit[1].Split(',')[1]),
+                });
+            }
+            int maxX = 101;
+            int maxY = 103;
+            bool treeFound = false;
+            int seconds = 0;
+            while (!treeFound)
+            {
+                seconds++;
+                foreach (Day14Robot robot in robotList)
+                {
+                    robot.X = (robot.X + robot.VX) % maxX;
+                    robot.Y = (robot.Y + robot.VY) % maxY;
+                    if (robot.X < 0)
+                        robot.X += maxX;
+                    if (robot.Y < 0)
+                        robot.Y += maxY;
+                }
+                if (!robotList.GroupBy(g => new { g.X, g.Y }).Where(w => w.Count() > 1).Any())
+                {
+                    for (int y = 0; y < maxY; y++)
+                    {
+                        string row = string.Empty;
+                        for (int x = 0; x < maxX; x++)
+                            row += robotList.Any(a => a.X == x && a.Y == y) ? "X" : ".";
+                        Debug.WriteLine(row + Environment.NewLine);
+                    }
+                    Debug.WriteLine("Seconds: " + seconds);
+                    treeFound = true;
+                }
+            }
         }
 
         [TestMethod]
