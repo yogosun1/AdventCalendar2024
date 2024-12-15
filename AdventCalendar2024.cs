@@ -1320,13 +1320,276 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day15_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day15.txt").ToList();
+            List<Day15Coordinate> warehouse = new List<Day15Coordinate>();
+            List<char> instructions = new List<char>();
+            int x = 0, y = 0;
+            bool warehouseParsed = false;
+            int robotX = 0, robotY = 0;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    warehouseParsed = true;
+                    continue;
+                }
+                if (!warehouseParsed)
+                {
+                    x = 0;
+                    foreach (char position in input)
+                    {
+                        if (position == '@')
+                        {
+                            robotX = x;
+                            robotY = y;
+                        }
+                        warehouse.Add(new Day15Coordinate { X = x++, Y = y, IsBox = position == 'O', IsWall = position == '#' });
+                    }
+                    y++;
+                }
+                else
+                    input.ToList().ForEach(e => instructions.Add(e));
+            }
+            foreach (char instruction in instructions)
+            {
+                Day15Coordinate position = warehouse.First(w => (instruction == '<' && w.X == robotX - 1 && w.Y == robotY)
+                    || (instruction == '^' && w.X == robotX && w.Y == robotY - 1)
+                    || (instruction == '>' && w.X == robotX + 1 && w.Y == robotY)
+                    || (instruction == 'v' && w.X == robotX && w.Y == robotY + 1));
+                if (position.IsWall)
+                    continue;
+                if (!position.IsBox)
+                {
+                    robotX = position.X;
+                    robotY = position.Y;
+                }
+                else
+                {
+                    List<Day15Coordinate> line = warehouse.Where(w => (instruction == '<' && w.X < robotX && w.Y == robotY)
+                        || (instruction == '^' && w.X == robotX && w.Y < robotY)
+                        || (instruction == '>' && w.X > robotX && w.Y == robotY)
+                        || (instruction == 'v' && w.X == robotX && w.Y > robotY)).ToList();
+                    if (instruction == '<')
+                        line = line.OrderByDescending(o => o.X).ToList();
+                    else if (instruction == '^')
+                        line = line.OrderByDescending(o => o.Y).ToList();
+                    else if (instruction == 'v')
+                        line = line.OrderBy(o => o.Y).ToList();
+                    else if (instruction == '>')
+                        line = line.OrderBy(o => o.X).ToList();
+                    bool movePossible = false;
+                    Day15Coordinate lastLinePosition = null;
+                    foreach (Day15Coordinate linePosition in line)
+                    {
+                        if (linePosition.IsWall)
+                            break;
+                        if (!linePosition.IsBox)
+                        {
+                            movePossible = true;
+                            lastLinePosition = linePosition;
+                            break;
+                        }
+                    }
+                    if (movePossible)
+                    {
+                        lastLinePosition.IsBox = true;
+                        position.IsBox = false;
+                        robotX = position.X;
+                        robotY = position.Y;
+                    }
+                }
+            }
+            int sumGps = warehouse.Where(w => w.IsBox).Sum(s => s.Y * 100 + s.X);
+            Debug.WriteLine(sumGps);
+        }
 
+        private void Day15Print(List<Day15Coordinate> warehouse)
+        {
+            int previousY = 0;
+            string output = string.Empty;
+            foreach (Day15Coordinate coordinate in warehouse.OrderBy(o => o.Y).ThenBy(t => t.X))
+            {
+                if (previousY != coordinate.Y)
+                    output += Environment.NewLine;
+                if (coordinate.IsBox)
+                    output += "O";
+                else if (coordinate.IsWall)
+                    output += "#";
+                else
+                    output += ".";
+                previousY = coordinate.Y;
+            }
+            Debug.WriteLine(output);
+        }
+
+        private class Day15Coordinate
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool IsWall { get; set; }
+            public bool IsBox { get; set; }
+        }
+
+        private class Day15_2Coordinate
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool IsWall { get; set; }
+            public bool IsLeftBox { get; set; }
+            public bool IsRightBox { get; set; }
+            public bool IsBox { get; set; }
+            public int BoxId { get; set; }
         }
 
         [TestMethod]
         public void Day15_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day15.txt").ToList();
+            List<Day15_2Coordinate> warehouse = new List<Day15_2Coordinate>();
+            List<char> instructions = new List<char>();
+            int x = 0, y = 0;
+            bool warehouseParsed = false;
+            int robotX = 0, robotY = 0;
+            int boxId = 0;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    warehouseParsed = true;
+                    continue;
+                }
+                if (!warehouseParsed)
+                {
+                    x = 0;
+                    foreach (char position in input)
+                    {
+                        if (position == '@')
+                        {
+                            robotX = x;
+                            robotY = y;
+                            warehouse.Add(new Day15_2Coordinate { X = x++, Y = y, IsBox = false, IsWall = false, IsLeftBox = false, IsRightBox = false, BoxId = -1 });
+                            warehouse.Add(new Day15_2Coordinate { X = x++, Y = y, IsBox = false, IsWall = false, IsLeftBox = false, IsRightBox = false, BoxId = -1 });
+                        }
+                        else
+                        {
+                            warehouse.Add(new Day15_2Coordinate { X = x++, Y = y, IsBox = position == 'O', IsLeftBox = position == 'O', IsRightBox = false, IsWall = position == '#', BoxId = position == 'O' ? boxId : -1 });
+                            warehouse.Add(new Day15_2Coordinate { X = x++, Y = y, IsBox = position == 'O', IsLeftBox = false, IsRightBox = position == 'O', IsWall = position == '#', BoxId = position == 'O' ? boxId++ : -1 });
+                        }
+                    }
+                    y++;
+                }
+                else
+                    input.ToList().ForEach(e => instructions.Add(e));
+            }
+            int moveNr = 0;
+            foreach (char instruction in instructions)
+            {
+                moveNr++;
+                Day15_2Coordinate position = warehouse.First(w => (instruction == '<' && w.X == robotX - 1 && w.Y == robotY)
+                    || (instruction == '^' && w.X == robotX && w.Y == robotY - 1)
+                    || (instruction == '>' && w.X == robotX + 1 && w.Y == robotY)
+                    || (instruction == 'v' && w.X == robotX && w.Y == robotY + 1));
+                if (position.IsWall)
+                    continue;
+                if (!position.IsBox)
+                {
+                    robotX = position.X;
+                    robotY = position.Y;
+                }
+                else
+                {
+                    if (Day15_2CanMove(warehouse, warehouse.Where(w => w.BoxId == position.BoxId).ToList(), instruction))
+                    {
+                        Day15_2Move(warehouse, warehouse.Where(w => w.BoxId == position.BoxId).ToList(), instruction);
+                        robotX = position.X;
+                        robotY = position.Y;
+                    }
+                }
+                //Debug.WriteLine("MoveNr: " + moveNr);
+                //Day15_2Print(warehouse, robotX, robotY);
+            }
+            int sumGps = warehouse.Where(w => w.IsBox && w.IsLeftBox).Sum(s => s.Y * 100 + s.X);
+            Debug.WriteLine(sumGps); // 1522420
+        }
 
+        private void Day15_2Print(List<Day15_2Coordinate> warehouse, int robotX, int robotY)
+        {
+            int previousY = 0;
+            string output = string.Empty;
+            foreach (Day15_2Coordinate coordinate in warehouse.OrderBy(o => o.Y).ThenBy(t => t.X))
+            {
+                if (previousY != coordinate.Y)
+                    output += Environment.NewLine;
+                if (coordinate.IsLeftBox)
+                    output += "[";
+                else if (coordinate.IsRightBox)
+                    output += "]";
+                else if (coordinate.IsWall)
+                    output += "#";
+                else
+                {
+                    if (coordinate.X == robotX && coordinate.Y == robotY)
+                        output += "@";
+                    else
+                        output += ".";
+                }
+                previousY = coordinate.Y;
+            }
+            Debug.WriteLine(output);
+        }
+
+        private bool Day15_2CanMove(List<Day15_2Coordinate> warehouse, List<Day15_2Coordinate> currentBox, char instruction)
+        {
+            int oldBoxId = currentBox.First().BoxId;
+            List<Day15_2Coordinate> newPosition = new List<Day15_2Coordinate>();
+            if (instruction == '<')
+                newPosition = warehouse.Where(w => (w.X == currentBox.Min(m => m.X) - 1 || w.X == currentBox.Min(m => m.X)) && w.Y == currentBox.Min(m => m.Y)).ToList();
+            else if (instruction == '^')
+                newPosition = warehouse.Where(w => (w.X == currentBox.Max(m => m.X) || w.X == currentBox.Min(m => m.X)) && w.Y == currentBox.Min(m => m.Y) - 1).ToList();
+            else if (instruction == 'v')
+                newPosition = warehouse.Where(w => (w.X == currentBox.Max(m => m.X) || w.X == currentBox.Min(m => m.X)) && w.Y == currentBox.Min(m => m.Y) + 1).ToList();
+            else
+                newPosition = warehouse.Where(w => (w.X == currentBox.Max(m => m.X) + 1 || w.X == currentBox.Max(m => m.X)) && w.Y == currentBox.Min(m => m.Y)).ToList();
+            if (newPosition.Any(a => a.IsWall))
+                return false;
+            bool canMove = true;
+            foreach (int boxId in newPosition.Where(w => w.BoxId != -1 && w.BoxId != oldBoxId).Select(s => s.BoxId).Distinct())
+                if (!Day15_2CanMove(warehouse, warehouse.Where(w => w.BoxId == boxId).ToList(), instruction))
+                    canMove = false;
+            return canMove;
+        }
+
+        private void Day15_2Move(List<Day15_2Coordinate> warehouse, List<Day15_2Coordinate> currentBox, char instruction)
+        {
+            int oldBoxId = currentBox.First().BoxId;
+            List<Day15_2Coordinate> newPosition = new List<Day15_2Coordinate>();
+            if (instruction == '<')
+                newPosition = warehouse.Where(w => (w.X == currentBox.Min(m => m.X) - 1 || w.X == currentBox.Min(m => m.X)) && w.Y == currentBox.Min(m => m.Y)).ToList();
+            else if (instruction == '^')
+                newPosition = warehouse.Where(w => (w.X == currentBox.Max(m => m.X) || w.X == currentBox.Min(m => m.X)) && w.Y == currentBox.Min(m => m.Y) - 1).ToList();
+            else if (instruction == 'v')
+                newPosition = warehouse.Where(w => (w.X == currentBox.Max(m => m.X) || w.X == currentBox.Min(m => m.X)) && w.Y == currentBox.Min(m => m.Y) + 1).ToList();
+            else
+                newPosition = warehouse.Where(w => (w.X == currentBox.Max(m => m.X) + 1 || w.X == currentBox.Max(m => m.X)) && w.Y == currentBox.Min(m => m.Y)).ToList();
+            foreach (int boxId in newPosition.Where(w => w.BoxId != -1 && w.BoxId != oldBoxId).Select(s => s.BoxId).Distinct())
+                Day15_2Move(warehouse, warehouse.Where(w => w.BoxId == boxId).ToList(), instruction);
+            Day15_2Coordinate leftBox = newPosition.OrderBy(o => o.X).First();
+            Day15_2Coordinate rightBox = newPosition.OrderByDescending(o => o.X).First();
+            currentBox.ForEach(e =>
+            {
+                e.IsBox = false;
+                e.IsLeftBox = false;
+                e.IsRightBox = false;
+                e.BoxId = -1;
+            });
+            leftBox.BoxId = oldBoxId;
+            leftBox.IsLeftBox = true;
+            leftBox.IsRightBox = false;
+            leftBox.IsBox = true;
+            rightBox.BoxId = oldBoxId;
+            rightBox.IsLeftBox = false;
+            rightBox.IsRightBox = true;
+            rightBox.IsBox = true;
         }
 
         [TestMethod]
