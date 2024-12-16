@@ -1595,13 +1595,114 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day16_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day16.txt").ToList();
+            List<Day16Pos> maze = new List<Day16Pos>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                foreach (char c in input)
+                {
+                    if (c != '#')
+                        maze.Add(new Day16Pos { X = x, Y = y, End = c == 'E', Start = c == 'S' });
+                    x++;
+                }
+                y++;
+            }
+            Debug.WriteLine(Day16CalculateBestPath(maze).First().Points);
+        }
 
+        private List<Day16QueueItem> Day16CalculateBestPath(List<Day16Pos> maze)
+        {
+            PriorityQueue<Day16QueueItem, int> queue = new();
+            Dictionary<string, int> knownLowestPoints = new Dictionary<string, int>();
+            Day16Pos start = maze.First(w => w.Start);
+            Day16Pos end = maze.First(w => w.End);
+            queue.Enqueue(new Day16QueueItem { Pos = start, Direction = 3, Points = 0, Visited = new HashSet<string> { start.X + "-" + start.Y } }, 0);
+            int dummy;
+            int bestPoints = int.MaxValue;
+            List<Day16QueueItem> bestPatchs = new List<Day16QueueItem>();
+            Day16QueueItem pos;
+            while (queue.TryDequeue(out pos, out dummy))
+            {
+                if (pos == null)
+                    return bestPatchs;
+                if (pos.Points > bestPoints)
+                    continue;
+                if (pos.Pos.End)
+                {
+                    if (bestPoints != pos.Points)
+                        bestPatchs.Clear();
+                    bestPatchs.Add(pos);
+                    bestPoints = pos.Points;
+                    Debug.WriteLine("New best points: " + bestPoints);
+                    continue;
+                }
+                List<Day16Pos> possibleSteps = maze.Where(w => Math.Abs(w.X - pos.Pos.X) + Math.Abs(w.Y - pos.Pos.Y) == 1 && !pos.Visited.Contains(w.X + "-" + w.Y)).ToList();
+                foreach (Day16Pos step in possibleSteps)
+                {
+                    // direction: 1 = left 2 = up 3 = right 4 = down
+                    Day16QueueItem newQueueItem = new Day16QueueItem();
+                    newQueueItem.Direction = step.X < pos.Pos.X ? 1 : step.X > pos.Pos.X ? 3 : step.Y < pos.Pos.Y ? 2 : 4;
+                    newQueueItem.Points = newQueueItem.Direction == pos.Direction ? pos.Points + 1 : Math.Abs(newQueueItem.Direction - pos.Direction) != 2 ? pos.Points + 1001 : pos.Points + 2001;
+                    int value;
+                    string key = step.X + "-" + step.Y + "-" + newQueueItem.Direction;
+                    if (knownLowestPoints.TryGetValue(step.X + "-" + step.Y + "-" + newQueueItem.Direction, out value))
+                    {
+                        if (value < newQueueItem.Points)
+                            continue;
+                        knownLowestPoints[key] = newQueueItem.Points;
+                    }
+                    else
+                        knownLowestPoints.Add(key, newQueueItem.Points);
+                    newQueueItem.Pos = step;
+                    pos.Visited.ToList().ForEach(e => newQueueItem.Visited.Add(e));
+                    newQueueItem.Visited.Add(step.X + "-" + step.Y);
+                    queue.Enqueue(newQueueItem, (Math.Abs(end.X - step.X) + Math.Abs(end.Y - step.Y) * 5000) + newQueueItem.Points);
+                }
+            }
+            return bestPatchs;
+        }
+
+        private class Day16Pos
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool End { get; set; }
+            public bool Start { get; set; }
+        }
+
+        private class Day16QueueItem
+        {
+            public Day16Pos Pos { get; set; }
+            public int Direction { get; set; }
+            public int Points { get; set; }
+            public HashSet<string> Visited = new HashSet<string>();
         }
 
         [TestMethod]
         public void Day16_2()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day16.txt").ToList();
+            List<Day16Pos> maze = new List<Day16Pos>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                foreach (char c in input)
+                {
+                    if (c != '#')
+                        maze.Add(new Day16Pos { X = x, Y = y, End = c == 'E', Start = c == 'S' });
+                    x++;
+                }
+                y++;
+            }
+            List<Day16QueueItem> bestPaths = Day16CalculateBestPath(maze);
+            HashSet<string> posList = new HashSet<string>();
+            foreach (Day16QueueItem path in bestPaths)
+                foreach (string step in path.Visited.Where(w => !posList.Contains(w)))
+                    posList.Add(step);
+            Debug.WriteLine(posList.Count());
         }
 
         [TestMethod]
