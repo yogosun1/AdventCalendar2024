@@ -1708,13 +1708,256 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day17_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day17.txt").ToList();
+            int registerA = 0;
+            int registerB = 0;
+            int registerC = 0;
+            List<int> program = new List<int>();
+            bool registerRead = false;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    registerRead = true;
+                    continue;
+                }
+                if (!registerRead)
+                {
+                    if (input.Contains("Register A"))
+                        registerA = int.Parse(input.Split(':')[1].Trim());
+                    else if (input.Contains("Register B"))
+                        registerB = int.Parse(input.Split(':')[1].Trim());
+                    else if (input.Contains("Register C"))
+                        registerC = int.Parse(input.Split(':')[1].Trim());
+                }
+                else
+                    input.Where(w => char.IsDigit(w)).ToList().ForEach(e => program.Add(int.Parse(e.ToString())));
+            }
+            string output = Day17RunProgram(program, registerA, registerB, registerC);
+            Debug.WriteLine(output);
+        }
 
+        private string Day17RunProgram(List<int> program, int registerA, int registerB, int registerC)
+        {
+            List<int> outputList = new List<int>();
+            int instructionPointer = 0;
+            while (true)
+            {
+                if (instructionPointer >= program.Count())
+                    break;
+                int opcode = program[instructionPointer];
+                int literalOperand = program[instructionPointer + 1];
+                int comboOperand = literalOperand == 4 ? registerA : literalOperand == 5 ? registerB : literalOperand == 6 ? registerC : literalOperand;
+                if (opcode == 0)
+                    registerA = (int)(registerA / Math.Pow(2, comboOperand));
+                else if (opcode == 1)
+                    registerB = registerB ^ literalOperand;
+                else if (opcode == 2)
+                    registerB = comboOperand % 8;
+                else if (opcode == 3)
+                {
+                    if (registerA != 0)
+                    {
+                        instructionPointer = literalOperand;
+                        continue;
+                    }
+                }
+                else if (opcode == 4)
+                    registerB = registerB ^ registerC;
+                else if (opcode == 5)
+                    outputList.Add(comboOperand % 8);
+                else if (opcode == 6)
+                    registerB = (int)(registerA / Math.Pow(2, comboOperand));
+                else if (opcode == 7)
+                    registerC = (int)(registerA / Math.Pow(2, comboOperand));
+                instructionPointer += 2;
+            }
+            return string.Join(',', outputList);
         }
 
         [TestMethod]
         public void Day17_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day17.txt").ToList();
+            int registerA = 0;
+            int registerB = 0;
+            int registerC = 0;
+            List<int> program = new List<int>();
+            bool registerRead = false;
+            string originalProgram = string.Empty;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    registerRead = true;
+                    continue;
+                }
+                if (!registerRead)
+                {
+                    if (input.Contains("Register A"))
+                        registerA = int.Parse(input.Split(':')[1].Trim());
+                    else if (input.Contains("Register B"))
+                        registerB = int.Parse(input.Split(':')[1].Trim());
+                    else if (input.Contains("Register C"))
+                        registerC = int.Parse(input.Split(':')[1].Trim());
+                }
+                else
+                {
+                    originalProgram = input.Split(':')[1].Trim();
+                    input.Where(w => char.IsDigit(w)).ToList().ForEach(e => program.Add(int.Parse(e.ToString())));
+                }
+            }
+            string output = string.Empty;
+            registerA = 308241087;
+            int recordLength = 0;
+            while (output != originalProgram)
+            {
+                registerA += 33554432;
+                //Debug.Write("Testing A: " + registerA);
+                output = Day17_2RunProgram(program, registerA, registerB, registerC, originalProgram);
+                if (output.Length > recordLength)
+                {
+                    Debug.WriteLine("NewRecord: " + output + " RecordA: " + registerA);
+                    recordLength = output.Length;
+                }
+            }
+            //Day17_FindPattern(program, registerB, registerC, originalProgram);
+            Debug.WriteLine(registerA);
+        }
 
+        private string Day17_2RunProgram(List<int> program, int registerA, int registerB, int registerC, string originalProgram)
+        {
+            string output = string.Empty;
+            int instructionPointer = 0;
+            bool firstOutput = true;
+            int loops = 0;
+            while (true)
+            {
+                loops++;
+                if (instructionPointer >= program.Count())
+                    break;
+                int opcode = program[instructionPointer];
+                int literalOperand = program[instructionPointer + 1];
+                int comboOperand = literalOperand == 4 ? registerA : literalOperand == 5 ? registerB : literalOperand == 6 ? registerC : literalOperand;
+                if (opcode == 0)
+                    registerA = (int)(registerA / Math.Pow(2, comboOperand));
+                else if (opcode == 1)
+                    registerB = registerB ^ literalOperand;
+                else if (opcode == 2)
+                    registerB = comboOperand % 8;
+                else if (opcode == 3)
+                {
+                    if (registerA != 0)
+                    {
+                        instructionPointer = literalOperand;
+                        continue;
+                    }
+                }
+                else if (opcode == 4)
+                    registerB = registerB ^ registerC;
+                else if (opcode == 5)
+                {
+                    if (!firstOutput)
+                        output += ",";
+                    else
+                        firstOutput = false;
+                    output += comboOperand % 8;
+                    if (!originalProgram.StartsWith(output))
+                        return output;
+                }
+                else if (opcode == 6)
+                    registerB = (int)(registerA / Math.Pow(2, comboOperand));
+                else if (opcode == 7)
+                    registerC = (int)(registerA / Math.Pow(2, comboOperand));
+                instructionPointer += 2;
+                if (loops == 10000)
+                    return output;
+            }
+            return output;
+        }
+
+
+
+        private List<int> Day17_FindPattern(List<int> program, int registerB, int registerC, string originalProgram)
+        {
+            bool patternFound = false;
+            List<int> diffList = new List<int>();
+            string diffOutput = string.Empty;
+            List<int> aList = new List<int>();
+
+            int startA = -1;
+            int registerA = -1;
+            while (!patternFound)
+            {
+                startA++;
+                registerA = startA;
+                string output = string.Empty;
+                int instructionPointer = 0;
+                bool firstOutput = true;
+                int loops = 0;
+                int originalA = registerA;
+                while (true)
+                {
+                    loops++;
+                    if (instructionPointer >= program.Count())
+                        break;
+                    int opcode = program[instructionPointer];
+                    int literalOperand = program[instructionPointer + 1];
+                    int comboOperand = literalOperand == 4 ? registerA : literalOperand == 5 ? registerB : literalOperand == 6 ? registerC : literalOperand;
+                    if (opcode == 0)
+                        registerA = (int)(registerA / Math.Pow(2, comboOperand));
+                    else if (opcode == 1)
+                        registerB = registerB ^ literalOperand;
+                    else if (opcode == 2)
+                        registerB = comboOperand % 8;
+                    else if (opcode == 3)
+                    {
+                        if (registerA != 0)
+                        {
+                            instructionPointer = literalOperand;
+                            continue;
+                        }
+                    }
+                    else if (opcode == 4)
+                        registerB = registerB ^ registerC;
+                    else if (opcode == 5)
+                    {
+                        if (!firstOutput)
+                            output += ",";
+                        else
+                            firstOutput = false;
+                        output += comboOperand % 8;
+                        if (originalProgram.StartsWith(output) && output.Length == 13)
+                        {
+                            if (aList.Count() > 0)
+                                diffList.Add(originalA - aList.Last());
+                            aList.Add(originalA);
+
+                            Debug.WriteLine("Loop: " + loops + Environment.NewLine
+                            + "originalA: " + originalA + Environment.NewLine
+                            + "Output: " + output + Environment.NewLine
+                            + "DiffList: " + string.Join(',', diffList) + Environment.NewLine
+                            );
+
+                            if (diffList.Count() > 40)
+                            {
+                                if (Regex.Matches(string.Join(',', diffList), string.Join(',', diffList.Take(10))).Count() == 4)
+                                {
+                                    return diffList.Take(10).ToList();
+                                }
+                            }
+                        }
+                        if (!originalProgram.StartsWith(output))
+                            break;
+                    }
+                    else if (opcode == 6)
+                        registerB = (int)(registerA / Math.Pow(2, comboOperand));
+                    else if (opcode == 7)
+                        registerC = (int)(registerA / Math.Pow(2, comboOperand));
+                    instructionPointer += 2;
+                }
+            }
+            return null;
         }
 
         [TestMethod]
