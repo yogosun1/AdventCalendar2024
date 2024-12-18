@@ -1963,13 +1963,107 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day18_1()
         {
+            //List<string> inputList = File.ReadAllLines(@"Input\Day18Test.txt").ToList();
+            //int maxX = 6;
+            //int maxY = 6;
+            //int byteSteps = 12;
+            List<string> inputList = File.ReadAllLines(@"Input\Day18.txt").ToList();
+            int maxX = 70;
+            int maxY = 70;
+            int byteSteps = 1024;
+            List<Day18Byte> byteList = new List<Day18Byte>();
+            int fallStep = 1;
+            foreach (string input in inputList)
+                byteList.Add(new Day18Byte { X = int.Parse(input.Split(',')[0]), Y = int.Parse(input.Split(',')[1]), FallStep = fallStep++ });
+            Debug.Write(Day18CalculateMinSteps(byteList, maxX, maxY, byteSteps));
+        }
 
+        Dictionary<string, long> _day18KnownSteps = new Dictionary<string, long>();
+        private long Day18CalculateMinSteps(List<Day18Byte> byteList, int maxX, int maxY, int byteSteps)
+        {
+            PriorityQueue<Day18QueueItem, int> queue = new();
+            queue.Enqueue(new Day18QueueItem { X = 0, Y = 0, Steps = 0 }, 0);
+            int dummy;
+            Day18QueueItem pos;
+            long knownStep;
+            long minSteps = int.MaxValue;
+            while (queue.TryDequeue(out pos, out dummy))
+            {
+                if (_day18KnownSteps.TryGetValue(pos.X + "-" + pos.Y, out knownStep))
+                {
+                    if (knownStep <= pos.Steps)
+                        continue;
+                    _day18KnownSteps[pos.X + "-" + pos.Y] = pos.Steps;
+                }
+                else
+                    _day18KnownSteps.Add(pos.X + "-" + pos.Y, pos.Steps);
+                if (pos.X == maxX && pos.Y == maxY && pos.Steps < minSteps)
+                    minSteps = pos.Steps;
+                if (pos.Steps >= minSteps)
+                    continue;
+
+                int newX = pos.X + 1, newY = pos.Y;
+                if (newX <= maxX && !byteList.Any(a => a.X == newX && a.Y == newY && a.FallStep <= byteSteps))
+                    queue.Enqueue(new Day18QueueItem { X = newX, Y = newY, Steps = pos.Steps + 1 }, maxX - newX + maxY - newY + pos.Steps + 1);
+                newX = pos.X - 1;
+                newY = pos.Y;
+                if (newX >= 0 && !byteList.Any(a => a.X == newX && a.Y == newY && a.FallStep <= byteSteps))
+                    queue.Enqueue(new Day18QueueItem { X = newX, Y = newY, Steps = pos.Steps + 1 }, maxX - newX + maxY - newY + pos.Steps + 1);
+                newX = pos.X;
+                newY = pos.Y + 1;
+                if (newY <= maxY && !byteList.Any(a => a.X == newX && a.Y == newY && a.FallStep <= byteSteps))
+                    queue.Enqueue(new Day18QueueItem { X = newX, Y = newY, Steps = pos.Steps + 1 }, maxX - newX + maxY - newY + pos.Steps + 1);
+                newX = pos.X;
+                newY = pos.Y - 1;
+                if (newY >= 0 && !byteList.Any(a => a.X == newX && a.Y == newY && a.FallStep <= byteSteps))
+                    queue.Enqueue(new Day18QueueItem { X = newX, Y = newY, Steps = pos.Steps + 1 }, maxX - newX + maxY - newY + pos.Steps + 1);
+            }
+            long result;
+            if (_day18KnownSteps.TryGetValue(maxX + "-" + maxY, out result))
+                return result;
+            else 
+                return - 1;
+        }
+
+        private class Day18QueueItem
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int Steps { get; set; }
+        }
+
+        private class Day18Byte
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int FallStep { get; set; }
         }
 
         [TestMethod]
         public void Day18_2()
         {
-
+            //List<string> inputList = File.ReadAllLines(@"Input\Day18Test.txt").ToList();
+            //int maxX = 6;
+            //int maxY = 6;
+            //int byteSteps = 12;
+            List<string> inputList = File.ReadAllLines(@"Input\Day18.txt").ToList();
+            int maxX = 70;
+            int maxY = 70;
+            int byteSteps = 1024;
+            List<Day18Byte> byteList = new List<Day18Byte>();
+            int fallStep = 1;
+            foreach (string input in inputList)
+                byteList.Add(new Day18Byte { X = int.Parse(input.Split(',')[0]), Y = int.Parse(input.Split(',')[1]), FallStep = fallStep++ });
+            bool noExit = false;
+            while (!noExit)
+            {
+                _day18KnownSteps = new Dictionary<string, long>();
+                if (Day18CalculateMinSteps(byteList, maxX, maxY, byteSteps) == -1)
+                    break;
+                byteSteps++;
+            }
+            Day18Byte blockerByte = byteList[byteSteps - 1];
+            Debug.Write(blockerByte.X + "," + blockerByte.Y);
         }
 
         [TestMethod]
