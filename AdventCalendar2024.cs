@@ -1779,9 +1779,9 @@ namespace AdventCalendar2024
         public void Day17_2()
         {
             List<string> inputList = File.ReadAllLines(@"Input\Day17.txt").ToList();
-            int registerA = 0;
-            int registerB = 0;
-            int registerC = 0;
+            long registerA = 0;
+            long registerB = 0;
+            long registerC = 0;
             List<int> program = new List<int>();
             bool registerRead = false;
             string originalProgram = string.Empty;
@@ -1808,29 +1808,54 @@ namespace AdventCalendar2024
                 }
             }
             string output = string.Empty;
-            registerA = 308241087;
-            int recordLength = 0;
+            long additionSteps = 100;
+            int currentMatches = 0;
+            int currentMatchesSteps = 0;
             while (output != originalProgram)
             {
-                registerA += 33554432;
-                //Debug.Write("Testing A: " + registerA);
+                registerA += additionSteps;
                 output = Day17_2RunProgram(program, registerA, registerB, registerC, originalProgram);
-                if (output.Length > recordLength)
+                currentMatchesSteps++;
+                int matches = 0;
+                if (output.Length == originalProgram.Length)
                 {
-                    Debug.WriteLine("NewRecord: " + output + " RecordA: " + registerA);
-                    recordLength = output.Length;
+                    for (int i = output.Length - 1; i >= 0; i--)
+                    {
+                        if (output[i] == originalProgram[i])
+                            matches++;
+                        else
+                            break;
+                    }
                 }
+                if (matches > currentMatches)
+                {
+                    currentMatches = matches;
+                    currentMatchesSteps = 0;
+                    additionSteps /= 10;
+                    if (additionSteps == 0)
+                        additionSteps = 1;
+                    Debug.WriteLine("RecordA: " + registerA + " Output: " + output + " outputCount: " + output.Length + " Matches: " + matches);
+                }
+                else if (currentMatches == matches)
+                {
+                    if (currentMatchesSteps >= 10000)
+                    {
+                        additionSteps *= 10;
+                        currentMatchesSteps = 0;
+                    }
+                }
+                else
+                    currentMatches = matches;
             }
-            //Day17_FindPattern(program, registerB, registerC, originalProgram);
-            Debug.WriteLine(registerA);
+            Debug.WriteLine(registerA); // 236581108670061
         }
 
-        private string Day17_2RunProgram(List<int> program, int registerA, int registerB, int registerC, string originalProgram)
+        private string Day17_2RunProgram(List<int> program, long registerA, long registerB, long registerC, string originalProgram)
         {
             string output = string.Empty;
             int instructionPointer = 0;
             bool firstOutput = true;
-            int loops = 0;
+            long loops = 0;
             while (true)
             {
                 loops++;
@@ -1838,9 +1863,9 @@ namespace AdventCalendar2024
                     break;
                 int opcode = program[instructionPointer];
                 int literalOperand = program[instructionPointer + 1];
-                int comboOperand = literalOperand == 4 ? registerA : literalOperand == 5 ? registerB : literalOperand == 6 ? registerC : literalOperand;
+                long comboOperand = literalOperand == 4 ? registerA : literalOperand == 5 ? registerB : literalOperand == 6 ? registerC : literalOperand;
                 if (opcode == 0)
-                    registerA = (int)(registerA / Math.Pow(2, comboOperand));
+                    registerA = (long)(registerA / Math.Pow(2, comboOperand));
                 else if (opcode == 1)
                     registerB = registerB ^ literalOperand;
                 else if (opcode == 2)
@@ -1862,102 +1887,16 @@ namespace AdventCalendar2024
                     else
                         firstOutput = false;
                     output += comboOperand % 8;
-                    if (!originalProgram.StartsWith(output))
-                        return output;
+                    //if (!originalProgram.StartsWith(output) && output.Length < 13)
+                    //    return output;
                 }
                 else if (opcode == 6)
-                    registerB = (int)(registerA / Math.Pow(2, comboOperand));
+                    registerB = (long)(registerA / Math.Pow(2, comboOperand));
                 else if (opcode == 7)
-                    registerC = (int)(registerA / Math.Pow(2, comboOperand));
+                    registerC = (long)(registerA / Math.Pow(2, comboOperand));
                 instructionPointer += 2;
-                if (loops == 10000)
-                    return output;
             }
             return output;
-        }
-
-
-
-        private List<int> Day17_FindPattern(List<int> program, int registerB, int registerC, string originalProgram)
-        {
-            bool patternFound = false;
-            List<int> diffList = new List<int>();
-            string diffOutput = string.Empty;
-            List<int> aList = new List<int>();
-
-            int startA = -1;
-            int registerA = -1;
-            while (!patternFound)
-            {
-                startA++;
-                registerA = startA;
-                string output = string.Empty;
-                int instructionPointer = 0;
-                bool firstOutput = true;
-                int loops = 0;
-                int originalA = registerA;
-                while (true)
-                {
-                    loops++;
-                    if (instructionPointer >= program.Count())
-                        break;
-                    int opcode = program[instructionPointer];
-                    int literalOperand = program[instructionPointer + 1];
-                    int comboOperand = literalOperand == 4 ? registerA : literalOperand == 5 ? registerB : literalOperand == 6 ? registerC : literalOperand;
-                    if (opcode == 0)
-                        registerA = (int)(registerA / Math.Pow(2, comboOperand));
-                    else if (opcode == 1)
-                        registerB = registerB ^ literalOperand;
-                    else if (opcode == 2)
-                        registerB = comboOperand % 8;
-                    else if (opcode == 3)
-                    {
-                        if (registerA != 0)
-                        {
-                            instructionPointer = literalOperand;
-                            continue;
-                        }
-                    }
-                    else if (opcode == 4)
-                        registerB = registerB ^ registerC;
-                    else if (opcode == 5)
-                    {
-                        if (!firstOutput)
-                            output += ",";
-                        else
-                            firstOutput = false;
-                        output += comboOperand % 8;
-                        if (originalProgram.StartsWith(output) && output.Length == 13)
-                        {
-                            if (aList.Count() > 0)
-                                diffList.Add(originalA - aList.Last());
-                            aList.Add(originalA);
-
-                            Debug.WriteLine("Loop: " + loops + Environment.NewLine
-                            + "originalA: " + originalA + Environment.NewLine
-                            + "Output: " + output + Environment.NewLine
-                            + "DiffList: " + string.Join(',', diffList) + Environment.NewLine
-                            );
-
-                            if (diffList.Count() > 40)
-                            {
-                                if (Regex.Matches(string.Join(',', diffList), string.Join(',', diffList.Take(10))).Count() == 4)
-                                {
-                                    return diffList.Take(10).ToList();
-                                }
-                            }
-                        }
-                        if (!originalProgram.StartsWith(output))
-                            break;
-                    }
-                    else if (opcode == 6)
-                        registerB = (int)(registerA / Math.Pow(2, comboOperand));
-                    else if (opcode == 7)
-                        registerC = (int)(registerA / Math.Pow(2, comboOperand));
-                    instructionPointer += 2;
-                }
-            }
-            return null;
         }
 
         [TestMethod]
@@ -2021,8 +1960,8 @@ namespace AdventCalendar2024
             long result;
             if (_day18KnownSteps.TryGetValue(maxX + "-" + maxY, out result))
                 return result;
-            else 
-                return - 1;
+            else
+                return -1;
         }
 
         private class Day18QueueItem
