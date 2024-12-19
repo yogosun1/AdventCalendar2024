@@ -2008,13 +2008,113 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day19_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day19.txt").ToList();
+            List<string> patterns = new List<string>();
+            List<string> designs = new List<string>();
+            bool towelsParsed = false;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    towelsParsed = true;
+                    continue;
+                }
+                if (!towelsParsed)
+                    input.Split(',').ToList().ForEach(e => patterns.Add(e.Trim()));
+                else
+                    designs.Add(input);
+            }
 
+            int possibleDesigns = 0;
+            foreach (string design in designs)
+            {
+                bool isPossible = Day19IsDesignPossible(patterns, design);
+                Debug.WriteLine("Design: " + design + " Possible?: " + isPossible);
+                if (isPossible)
+                    possibleDesigns++;
+
+            }
+            Debug.WriteLine(possibleDesigns);
+        }
+
+        Dictionary<string, bool> _day19KnownPatterns = new Dictionary<string, bool>();
+        private bool Day19IsDesignPossible(List<string> patterns, string design)
+        {
+            if (string.IsNullOrWhiteSpace(design))
+                return true;
+            bool isPossible = false;
+            foreach (string pattern in patterns.Where(w => design.StartsWith(w)))
+            {
+                string nextDesign = design.Substring(pattern.Length);
+                bool knownPossible = false;
+                if (_day19KnownPatterns.TryGetValue(nextDesign, out knownPossible))
+                {
+                    if (knownPossible)
+                        return true;
+                    else
+                        continue;
+                }
+                if (Day19IsDesignPossible(patterns, nextDesign))
+                {
+                    _day19KnownPatterns.Add(nextDesign, true);
+                    return true;
+                }
+                else
+                    _day19KnownPatterns.Add(nextDesign, false);
+            }
+            return isPossible;
         }
 
         [TestMethod]
         public void Day19_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day19.txt").ToList();
+            List<string> patterns = new List<string>();
+            List<string> designs = new List<string>();
+            bool towelsParsed = false;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    towelsParsed = true;
+                    continue;
+                }
+                if (!towelsParsed)
+                    input.Split(',').ToList().ForEach(e => patterns.Add(e.Trim()));
+                else
+                    designs.Add(input);
+            }
 
+            long possibleDesigns = 0;
+            foreach (string design in designs)
+            {
+                long count = Day19_2IsDesignPossible(patterns, design);
+                Debug.WriteLine("Design: " + design + " PossibleCount: " + count);
+                possibleDesigns += count;
+            }
+            Debug.WriteLine(possibleDesigns);
+        }
+
+        Dictionary<string, long> _day19_2KnownPatterns = new Dictionary<string, long>();
+        private long Day19_2IsDesignPossible(List<string> patterns, string design)
+        {
+            if (string.IsNullOrWhiteSpace(design))
+                return 1;
+            long possibleCount = 0;
+            foreach (string pattern in patterns.Where(w => design.StartsWith(w)))
+            {
+                string nextDesign = design.Substring(pattern.Length);
+                long knownPossible = 0;
+                if (_day19_2KnownPatterns.TryGetValue(nextDesign, out knownPossible))
+                    possibleCount += knownPossible;
+                else
+                {
+                    long count = Day19_2IsDesignPossible(patterns, nextDesign);
+                    possibleCount += count;
+                    _day19_2KnownPatterns.Add(nextDesign, count);
+                }
+            }
+            return possibleCount;
         }
 
         [TestMethod]
