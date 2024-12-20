@@ -2120,13 +2120,162 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day20_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day20.txt").ToList();
+            List<Day20Position> map = new List<Day20Position>();
+            int x = 0, y = 0;
+            int startX = 0, startY = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                foreach (char c in input)
+                {
+                    if (c == 'S')
+                    {
+                        startX = x;
+                        startY = y;
+                    }
+                    if (c == '#')
+                        x++;
+                    else
+                        map.Add(new Day20Position { X = x++, Y = y, IsEnd = c == 'E', IsWall = c == '#' });
+                }
+                y++;
+            }
+            Dictionary<string, int> knownSteps = Day20CalculateKnownNoCheatPathSteps(map, startX, startY);
+            List<Day20Path> paths = Day20CalculatePaths(map, startX, startY, true, knownSteps.Count(), knownSteps, 2);
+            var testList = paths.Select(s => s.Steps)
+                .GroupBy(g => g).Select(t => new { Count = t.Count(), SavedTiles = knownSteps.Count() - t.Key }).ToList();
+            foreach (var test in testList.OrderBy(o => o.SavedTiles))
+                Debug.WriteLine("There are " + test.Count + " cheats that save " + test.SavedTiles + " picoseconds.");
+            int result = paths.Where(w => (w.Steps + 100) <= knownSteps.Count()).Count();
+            Debug.WriteLine(result); // 1367
+        }
 
+        private Dictionary<string, int> Day20CalculateKnownNoCheatPathSteps(List<Day20Position> map, int startX, int startY)
+        {
+            Dictionary<string, int> knownPaths = new Dictionary<string, int>();
+            int steps = 0;
+            Day20Position pos = map.First(w => w.X == startX && w.Y == startY);
+            knownPaths.Add(pos.X + "-" + pos.Y, steps);
+            while (true)
+            {
+                pos = map.First(w => Math.Abs(w.X - pos.X) + Math.Abs(w.Y - pos.Y) == 1 && !w.IsWall && !knownPaths.ContainsKey(w.X + "-" + w.Y));
+                knownPaths.Add(pos.X + "-" + pos.Y, ++steps);
+                if (pos.IsEnd)
+                    break;
+            }
+            int maxSteps = knownPaths.Max(m => m.Value);
+            foreach (KeyValuePair<string, int> path in knownPaths)
+                knownPaths[path.Key] = maxSteps - path.Value;
+            return knownPaths;
+        }
+
+        private class Day20Path
+        {
+            public int Steps { get; set; }
+            public bool IsCheatUsed { get; set; }
+            public int CurrentX { get; set; }
+            public int CurrentY { get; set; }
+            public int PreviousX { get; set; }
+            public int PreviousY { get; set; }
+        }
+
+        private class Day20Position
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool IsWall { get; set; }
+            public bool IsEnd { get; set; }
         }
 
         [TestMethod]
         public void Day20_2()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day20.txt").ToList();
+            List<Day20Position> map = new List<Day20Position>();
+            int x = 0, y = 0;
+            int startX = 0, startY = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                foreach (char c in input)
+                {
+                    if (c == 'S')
+                    {
+                        startX = x;
+                        startY = y;
+                    }
+                    if (c == '#')
+                        x++;
+                    else
+                        map.Add(new Day20Position { X = x++, Y = y, IsEnd = c == 'E', IsWall = c == '#' });
+                }
+                y++;
+            }
+            Dictionary<string, int> knownSteps = Day20CalculateKnownNoCheatPathSteps(map, startX, startY);
+            List<Day20Path> paths = Day20CalculatePaths(map, startX, startY, true, knownSteps.Count(), knownSteps, 20);
+            //var testList = paths.Select(s => s.Steps)
+            //    .GroupBy(g => g).Select(t => new { Count = t.Count(), SavedTiles = knownSteps.Count() - t.Key }).ToList();
+            //foreach (var test in testList.OrderBy(o => o.SavedTiles))
+            //    Debug.WriteLine("There are " + test.Count + " cheats that save " + test.SavedTiles + " picoseconds.");
+            int result = paths.Where(w => (w.Steps + 100) <= knownSteps.Count()).Count();
+            Debug.WriteLine(result);
+        }
 
+        private List<Day20Path> Day20CalculatePaths(List<Day20Position> map, int startX, int startY, bool allowCheat, int maxAllowedSteps, Dictionary<string, int> knownStepList, int maxAllowedCheatStep)
+        {
+            List<Day20Path> remainingPaths = new List<Day20Path>();
+            Queue<Day20Path> queue = new();
+            Day20Path startPath = new Day20Path { CurrentX = startX, CurrentY = startY, IsCheatUsed = !allowCheat, PreviousX = -1, PreviousY = -1, Steps = 1 };
+            queue.Enqueue(startPath);
+            List<Day20Path> successfullPaths = new List<Day20Path>();
+            Day20Path path;
+            int maxX = map.Max(m => m.X);
+            int maxY = map.Max(m => m.Y);
+            while (queue.TryDequeue(out path))
+            {
+                if (path == null)
+                    break;
+                if (path.Steps >= maxAllowedSteps)
+                    continue;
+                int knownSteps;
+                if (path.IsCheatUsed && knownStepList.TryGetValue(path.CurrentX + "-" + path.CurrentY, out knownSteps))
+                {
+                    if (path.Steps + knownSteps > maxAllowedSteps)
+                        continue;
+                    Day20Path newPath = new Day20Path
+                    {
+                        CurrentX = path.CurrentX,
+                        CurrentY = path.CurrentY,
+                        IsCheatUsed = path.IsCheatUsed,
+                        Steps = path.Steps + knownSteps,
+                    };
+                    successfullPaths.Add(newPath);
+                    continue;
+                }
+                List<Day20Position> possiblePaths = map.Where(w => Math.Abs(w.X - path.CurrentX) + Math.Abs(w.Y - path.CurrentY) == 1
+                    && !(w.X == path.PreviousX && w.Y == path.PreviousY)).ToList();
+                if (!path.IsCheatUsed)
+                    possiblePaths.AddRange(map.Where(w => Math.Abs(w.X - path.CurrentX) + Math.Abs(w.Y - path.CurrentY) <= maxAllowedCheatStep
+                        && Math.Abs(w.X - path.CurrentX) + Math.Abs(w.Y - path.CurrentY) >= 2));
+                foreach (Day20Position possiblePath in possiblePaths)
+                {
+                    Day20Path newPath = new Day20Path
+                    {
+                        CurrentX = possiblePath.X,
+                        CurrentY = possiblePath.Y,
+                        IsCheatUsed = path.IsCheatUsed || Math.Abs(possiblePath.X - path.CurrentX) + Math.Abs(possiblePath.Y - path.CurrentY) >= 2,
+                        PreviousX = path.CurrentX,
+                        PreviousY = path.CurrentY,
+                        Steps = path.Steps + Math.Abs(possiblePath.X - path.CurrentX) + Math.Abs(possiblePath.Y - path.CurrentY),
+                    };
+                    if (possiblePath.IsEnd)
+                        successfullPaths.Add(newPath);
+                    else
+                        queue.Enqueue(newPath);
+                }
+            }
+            return successfullPaths;
         }
 
         [TestMethod]
