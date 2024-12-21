@@ -2281,13 +2281,210 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day21_1()
         {
+            List<string> doorCodes = File.ReadAllLines(@"Input\Day21.txt").ToList();
+            List<Day21KeypadValue> numericKeypad = new List<Day21KeypadValue>
+            {
+                new Day21KeypadValue{ X = 0, Y = 0, Value = '7' },
+                new Day21KeypadValue{ X = 1, Y = 0, Value = '8' },
+                new Day21KeypadValue{ X = 2, Y = 0, Value = '9' },
+                new Day21KeypadValue{ X = 0, Y = 1, Value = '4' },
+                new Day21KeypadValue{ X = 1, Y = 1, Value = '5' },
+                new Day21KeypadValue{ X = 2, Y = 1, Value = '6' },
+                new Day21KeypadValue{ X = 0, Y = 2, Value = '1' },
+                new Day21KeypadValue{ X = 1, Y = 2, Value = '2' },
+                new Day21KeypadValue{ X = 2, Y = 2, Value = '3' },
+                new Day21KeypadValue{ X = 1, Y = 3, Value = '0' },
+                new Day21KeypadValue{ X = 2, Y = 3, Value = 'A' },
+            };
+            List<Day21KeypadValue> directionalKeypad = new List<Day21KeypadValue>
+            {
+                new Day21KeypadValue{ X = 1, Y = 0, Value = '^' },
+                new Day21KeypadValue{ X = 2, Y = 0, Value = 'A' },
+                new Day21KeypadValue{ X = 0, Y = 1, Value = '<' },
+                new Day21KeypadValue{ X = 1, Y = 1, Value = 'v' },
+                new Day21KeypadValue{ X = 2, Y = 1, Value = '>' },
+            };
+            string humanCode = string.Empty;
+            int result = 0;
+            foreach (string code in doorCodes)
+            {
+                List<string> robot1Combinations = Day21TranslateCode(code, numericKeypad);
+                List<string> robot2Combinations = new List<string>();
+                foreach (string combination in robot1Combinations)
+                    robot2Combinations.AddRange(Day21TranslateCode(combination, directionalKeypad));
+                int minLength = robot2Combinations.Min(m => m.Length);
+                foreach (string s in robot2Combinations.Where(w => w.Length != minLength).ToArray())
+                    robot2Combinations.Remove(s);
+                List<string> robot3Combinations = new List<string>();
+                foreach (string combination in robot2Combinations)
+                    robot3Combinations.AddRange(Day21TranslateCode(combination, directionalKeypad));
+                result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
+            }
+            Debug.WriteLine(result);
+        }
 
+        private List<string> Day21TranslateCode(string code, List<Day21KeypadValue> keypad)
+        {
+            char previousKey = 'A';
+            List<string> possibleCombinations = new List<string>();
+            possibleCombinations.Add(string.Empty);
+            foreach (char key in code)
+            {
+                List<string> newCombinationList = new List<string>();
+                foreach (string combination in possibleCombinations)
+                    newCombinationList.AddRange(Day21TranslateKey(previousKey, keypad, key, combination));
+                previousKey = key;
+                possibleCombinations = newCombinationList;
+            }
+            return possibleCombinations;
+        }
+
+        private List<string> Day21TranslateKey(char currentLocationKey, List<Day21KeypadValue> keypad, char key, string translatedCode)
+        {
+            if (currentLocationKey == key)
+                return new List<string> { translatedCode + 'A' };
+            List<string> possibleTranslatedCodes = new List<string>();
+            Day21KeypadValue currentLocation = keypad.First(w => w.Value == currentLocationKey);
+            Day21KeypadValue target = keypad.First(w => w.Value == key);
+            Day21KeypadValue previousLocation;
+            previousLocation = currentLocation;
+            int currentDistance = Math.Abs(target.X - currentLocation.X) + Math.Abs(target.Y - currentLocation.Y);
+            List<Day21KeypadValue> possibleLocations = keypad.Where(w => (Math.Abs(w.X - currentLocation.X) + Math.Abs(w.Y - currentLocation.Y)) == 1
+                && (currentDistance - (Math.Abs(target.X - w.X) + Math.Abs(target.Y - w.Y))) == 1).ToList();
+            foreach (Day21KeypadValue location in possibleLocations)
+            {
+                char move = previousLocation.X - location.X == 1 ? '<' : previousLocation.X - location.X == -1 ? '>' : previousLocation.Y - location.Y == 1 ? '^' : 'v';
+                if (location.Value == target.Value)
+                    possibleTranslatedCodes.Add(translatedCode + move + "A");
+                else
+                    possibleTranslatedCodes.AddRange(Day21TranslateKey(location.Value, keypad, key, translatedCode + move));
+            }
+            return possibleTranslatedCodes;
+        }
+
+        private class Day21KeypadValue
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public char Value { get; set; }
         }
 
         [TestMethod]
         public void Day21_2()
         {
+            List<string> doorCodes = File.ReadAllLines(@"Input\Day21.txt").ToList();
+            List<Day21KeypadValue> numericKeypad = new List<Day21KeypadValue>
+            {
+                new Day21KeypadValue{ X = 0, Y = 0, Value = '7' },
+                new Day21KeypadValue{ X = 1, Y = 0, Value = '8' },
+                new Day21KeypadValue{ X = 2, Y = 0, Value = '9' },
+                new Day21KeypadValue{ X = 0, Y = 1, Value = '4' },
+                new Day21KeypadValue{ X = 1, Y = 1, Value = '5' },
+                new Day21KeypadValue{ X = 2, Y = 1, Value = '6' },
+                new Day21KeypadValue{ X = 0, Y = 2, Value = '1' },
+                new Day21KeypadValue{ X = 1, Y = 2, Value = '2' },
+                new Day21KeypadValue{ X = 2, Y = 2, Value = '3' },
+                new Day21KeypadValue{ X = 1, Y = 3, Value = '0' },
+                new Day21KeypadValue{ X = 2, Y = 3, Value = 'A' },
+            };
+            List<Day21KeypadValue> directionalKeypad = new List<Day21KeypadValue>
+            {
+                new Day21KeypadValue{ X = 1, Y = 0, Value = '^' },
+                new Day21KeypadValue{ X = 2, Y = 0, Value = 'A' },
+                new Day21KeypadValue{ X = 0, Y = 1, Value = '<' },
+                new Day21KeypadValue{ X = 1, Y = 1, Value = 'v' },
+                new Day21KeypadValue{ X = 2, Y = 1, Value = '>' },
+            };
+            string humanCode = string.Empty;
+            int result = 0;
+            foreach (string code in doorCodes)
+            {
+                List<string> robot1Combinations = Day21_2TranslateCode(code, numericKeypad);
+                List<string> robot2Combinations = Day21RobotCombinations(robot1Combinations, directionalKeypad);
+                List<string> robot3Combinations = Day21RobotCombinations(robot2Combinations, directionalKeypad);
+                result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
+            }
+            Debug.WriteLine(result);
+        }
 
+        private List<string> Day21RobotCombinations(List<string> previousRobotCombinations, List<Day21KeypadValue> keypad)
+        {
+            Dictionary<string, int> combinationLengths = new Dictionary<string, int>();
+            foreach (string combination in previousRobotCombinations)
+                combinationLengths.Add(combination, Day21CombinationLength(combination, keypad));
+            List<string> returnCombinations = new List<string>();
+            foreach (string combination in combinationLengths.Where(w => w.Value == combinationLengths.Min(m => m.Value)).Select(s => s.Key))
+                returnCombinations.AddRange(Day21_2TranslateCode(combination, keypad));
+            return returnCombinations.Distinct().ToList();
+        }
+
+        private int Day21CombinationLength(string code, List<Day21KeypadValue> keypad)
+        {
+            string translation = string.Empty;
+            char previousKey = 'A';
+            foreach (char key in code)
+            {
+                translation += Day21_2TranslateKeyOnlyFirstMatching(previousKey, keypad, key, translation).First();
+                previousKey = key;
+            }
+            return translation.Length;
+        }
+
+        private string Day21_2TranslateKeyOnlyFirstMatching(char currentLocationKey, List<Day21KeypadValue> keypad, char key, string translatedCode)
+        {
+            if (currentLocationKey == key)
+                return translatedCode + 'A';
+            Day21KeypadValue currentLocation = keypad.First(w => w.Value == currentLocationKey);
+            Day21KeypadValue target = keypad.First(w => w.Value == key);
+            Day21KeypadValue previousLocation;
+            previousLocation = currentLocation;
+            int currentDistance = Math.Abs(target.X - currentLocation.X) + Math.Abs(target.Y - currentLocation.Y);
+            Day21KeypadValue location = keypad.Where(w => (Math.Abs(w.X - currentLocation.X) + Math.Abs(w.Y - currentLocation.Y)) == 1
+                && (currentDistance - (Math.Abs(target.X - w.X) + Math.Abs(target.Y - w.Y))) == 1).First();
+            char move = previousLocation.X - location.X == 1 ? '<' : previousLocation.X - location.X == -1 ? '>' : previousLocation.Y - location.Y == 1 ? '^' : 'v';
+            if (location.Value == target.Value)
+                return translatedCode + move + "A";
+            else
+                return Day21_2TranslateKeyOnlyFirstMatching(location.Value, keypad, key, translatedCode + move);
+        }
+
+        private List<string> Day21_2TranslateCode(string code, List<Day21KeypadValue> keypad)
+        {
+            char previousKey = 'A';
+            List<string> possibleCombinations = new List<string>();
+            possibleCombinations.Add(string.Empty);
+            foreach (char key in code)
+            {
+                List<string> newCombinationList = new List<string>();
+                foreach (string combination in possibleCombinations)
+                    newCombinationList.AddRange(Day21_2TranslateKey(previousKey, keypad, key, combination));
+                previousKey = key;
+                possibleCombinations = newCombinationList;
+            }
+            return possibleCombinations;
+        }
+
+        private List<string> Day21_2TranslateKey(char currentLocationKey, List<Day21KeypadValue> keypad, char key, string translatedCode)
+        {
+            if (currentLocationKey == key)
+                return new List<string> { translatedCode + 'A' };
+            List<string> possibleTranslatedCodes = new List<string>();
+            Day21KeypadValue currentLocation = keypad.First(w => w.Value == currentLocationKey);
+            Day21KeypadValue target = keypad.First(w => w.Value == key);
+            Day21KeypadValue previousLocation;
+            previousLocation = currentLocation;
+            int currentDistance = Math.Abs(target.X - currentLocation.X) + Math.Abs(target.Y - currentLocation.Y);
+            List<Day21KeypadValue> possibleLocations = keypad.Where(w => (Math.Abs(w.X - currentLocation.X) + Math.Abs(w.Y - currentLocation.Y)) == 1
+                && (currentDistance - (Math.Abs(target.X - w.X) + Math.Abs(target.Y - w.Y))) == 1).ToList();
+            foreach (Day21KeypadValue location in possibleLocations)
+            {
+                char move = previousLocation.X - location.X == 1 ? '<' : previousLocation.X - location.X == -1 ? '>' : previousLocation.Y - location.Y == 1 ? '^' : 'v';
+                if (location.Value == target.Value)
+                    possibleTranslatedCodes.Add(translatedCode + move + "A");
+                else
+                    possibleTranslatedCodes.AddRange(Day21_2TranslateKey(location.Value, keypad, key, translatedCode + move));
+            }
+            return possibleTranslatedCodes;
         }
 
         [TestMethod]
