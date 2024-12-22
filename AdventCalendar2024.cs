@@ -2396,15 +2396,44 @@ namespace AdventCalendar2024
                 new Day21KeypadValue{ X = 2, Y = 1, Value = '>' },
             };
             string humanCode = string.Empty;
-            int result = 0;
+            long result = 0;
             foreach (string code in doorCodes)
             {
-                List<string> robot1Combinations = Day21_2TranslateCode(code, numericKeypad);
+                List<string> robot1Combinations = Day21_2TranslateCode(code.Substring(0, 1), numericKeypad);
+                Debug.WriteLine("I: " + 0 + " Length: " + robot1Combinations.Min(m => m.Length) + " Count: " + robot1Combinations.Count());
                 List<string> robot2Combinations = Day21RobotCombinations(robot1Combinations, directionalKeypad);
+                Debug.WriteLine("I: " + 1 + " Length: " + robot2Combinations.Min(m => m.Length) + " Count: " + robot2Combinations.Count());
                 List<string> robot3Combinations = Day21RobotCombinations(robot2Combinations, directionalKeypad);
-                result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
+                Debug.WriteLine("I: " + 2 + " Length: " + robot3Combinations.Min(m => m.Length) + " Count: " + robot3Combinations.Count());
+                List<string> robot4Combinations = Day21RobotCombinations(robot3Combinations, directionalKeypad);
+                Debug.WriteLine("I: " + 3 + " Length: " + robot4Combinations.Min(m => m.Length) + " Count: " + robot4Combinations.Count());
+                List<string> robot5Combinations = Day21RobotCombinations(robot4Combinations, directionalKeypad);
+                Debug.WriteLine("I: " + 4 + " Length: " + robot5Combinations.Min(m => m.Length) + " Count: " + robot5Combinations.Count());
+
+                //double lenMultiplyer = robot3Combinations.Min(m => (double)m.Length) / robot2Combinations.Min(m => (double)m.Length);
+                //double combinationLength = robot3Combinations.Min(m => m.Length);
+                //for (int i = 0; i < 23; i++)
+                //    combinationLength *= lenMultiplyer;
+
+
+                //result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
+                //result += long.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * (long)combinationLength;
             }
-            Debug.WriteLine(result);
+            //foreach (string code in doorCodes)
+            //{
+            //    string robot1Combinations = Day21TranslateCodeOnlyFirstMathcing(code, numericKeypad);
+            //    //string robot2Combinations = Day21TranslateCodeOnlyFirstMathcing(robot1Combinations, directionalKeypad);
+            //    //string robot3Combinations = Day21TranslateCodeOnlyFirstMathcing(robot2Combinations, directionalKeypad);
+
+            //    string combination = robot1Combinations;
+            //    for (int i = 0; i < 25; i++)
+            //    {
+            //        combination = Day21TranslateCodeOnlyFirstMathcing(combination, directionalKeypad);
+            //        Debug.WriteLine("I: " + i + " Length: " + combination.Length + " " + combination);
+            //    }
+            //    //result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
+            //}
+            Debug.WriteLine(result); // 128339891365302 too low
         }
 
         private List<string> Day21RobotCombinations(List<string> previousRobotCombinations, List<Day21KeypadValue> keypad)
@@ -2412,9 +2441,27 @@ namespace AdventCalendar2024
             Dictionary<string, int> combinationLengths = new Dictionary<string, int>();
             foreach (string combination in previousRobotCombinations)
                 combinationLengths.Add(combination, Day21CombinationLength(combination, keypad));
+            //List<string> returnCombinations = new List<string>();
+            //foreach (string combination in combinationLengths.Where(w => w.Value == combinationLengths.Min(m => m.Value)).Select(s => s.Key))
+            //    returnCombinations.AddRange(Day21_2TranslateCode(combination, keypad));
             List<string> returnCombinations = new List<string>();
-            foreach (string combination in combinationLengths.Where(w => w.Value == combinationLengths.Min(m => m.Value)).Select(s => s.Key))
-                returnCombinations.AddRange(Day21_2TranslateCode(combination, keypad));
+            int minLength = combinationLengths.Min(m => m.Value);
+            Debug.WriteLine(combinationLengths.Where(w => w.Value == minLength).Count());
+            foreach (string combination in combinationLengths.Where(w => w.Value == minLength).Select(s => s.Key))
+            {
+                List<string> newCombinations = Day21_2TranslateCode(combination, keypad);
+                int newMinLength = newCombinations.Min(m => m.Length);
+                if (newMinLength > minLength)
+                    continue;
+                else if (newMinLength == minLength)
+                    returnCombinations.AddRange(newCombinations.Where(w => w.Length == minLength));
+                else
+                {
+                    minLength = newMinLength;
+                    returnCombinations = new List<string>();
+                    returnCombinations.AddRange(newCombinations.Where(w => w.Length == minLength));
+                }
+            }
             return returnCombinations.Distinct().ToList();
         }
 
@@ -2424,10 +2471,22 @@ namespace AdventCalendar2024
             char previousKey = 'A';
             foreach (char key in code)
             {
-                translation += Day21_2TranslateKeyOnlyFirstMatching(previousKey, keypad, key, translation).First();
+                translation += Day21_2TranslateKeyOnlyFirstMatching(previousKey, keypad, key, string.Empty);
                 previousKey = key;
             }
             return translation.Length;
+        }
+
+        private string Day21TranslateCodeOnlyFirstMatching(string code, List<Day21KeypadValue> keypad)
+        {
+            string translation = string.Empty;
+            char previousKey = 'A';
+            foreach (char key in code)
+            {
+                translation += Day21_2TranslateKeyOnlyFirstMatching(previousKey, keypad, key, string.Empty);
+                previousKey = key;
+            }
+            return translation;
         }
 
         private string Day21_2TranslateKeyOnlyFirstMatching(char currentLocationKey, List<Day21KeypadValue> keypad, char key, string translatedCode)
@@ -2490,13 +2549,70 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day22_1()
         {
-
+            List<long> monkeys = File.ReadAllLines(@"Input\Day22.txt").Select(s => long.Parse(s)).ToList();
+            long sum = 0;
+            foreach (long monkey in monkeys)
+            {
+                long secretNumber = monkey;
+                for (int i = 0; i < 2000; i++)
+                {
+                    long step1 = (secretNumber ^ (secretNumber * 64)) % 16777216;
+                    long step2 = (step1 ^ (step1 / 32)) % 16777216;
+                    secretNumber = (step2 ^ (step2 * 2048)) % 16777216;
+                }
+                sum += secretNumber;
+            }
+            Debug.WriteLine(sum);
         }
 
         [TestMethod]
         public void Day22_2()
         {
+            List<long> buyerSecrets = File.ReadAllLines(@"Input\Day22.txt").Select(s => long.Parse(s)).ToList();
+            long sum = 0;
+            List<List<Day22Secret>> buyerList = new List<List<Day22Secret>>();
+            foreach (long secret in buyerSecrets)
+            {
+                List<Day22Secret> secretList = new List<Day22Secret>();
+                long secretNumber = secret;
+                int? change1 = null, change2 = null, change3 = null, change4 = null;
+                for (int i = 0; i < 2000; i++)
+                {
+                    long step1 = (secretNumber ^ (secretNumber * 64)) % 16777216;
+                    long step2 = (step1 ^ (step1 / 32)) % 16777216;
+                    long step3 = (step2 ^ (step2 * 2048)) % 16777216;
+                    change1 = change2;
+                    change2 = change3;
+                    change3 = change4;
+                    change4 = (int)((step3 % 10) - (secretNumber % 10));
+                    secretList.Add(new Day22Secret { Value = step3, Change = (int)((step3 % 10) - (secretNumber % 10)), Price = (int)(step3 % 10)
+                        , Changes4 = change1 != null ? (change1 + "," + change2 + "," + change3 + "," + change4) : string.Empty });
+                    secretNumber = step3;
+                }
+                sum += secretNumber;
+                buyerList.Add(secretList);
+            }
+            int mostBananas = 0;
+            string bestChange4 = string.Empty;
+            List<string> changes4List = buyerList.SelectMany(s => s).Where(w => w.Price >= 9 && !string.IsNullOrWhiteSpace(w.Changes4)).Select(t => t.Changes4).Distinct().ToList();
+            foreach (string change4 in changes4List)
+            {
+                int bananas = buyerList.Sum(w => (w.FirstOrDefault(t => t.Changes4 == change4)?.Price ?? 0));
+                if (mostBananas < bananas)
+                {
+                    mostBananas = bananas;
+                    bestChange4 = change4;
+                }
+            }
+            Debug.WriteLine(bestChange4 + " " + mostBananas);
+        }
 
+        private class Day22Secret
+        {
+            public long Value { get; set; }
+            public int Price { get; set; }
+            public int Change { get; set; }
+            public string Changes4 { get; set; }
         }
 
         [TestMethod]
