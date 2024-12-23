@@ -2323,6 +2323,13 @@ namespace AdventCalendar2024
             Debug.WriteLine(result);
         }
 
+        private class Day21KeypadValue
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public char Value { get; set; }
+        }
+
         private List<string> Day21TranslateCode(string code, List<Day21KeypadValue> keypad)
         {
             char previousKey = 'A';
@@ -2362,209 +2369,6 @@ namespace AdventCalendar2024
             return possibleTranslatedCodes;
         }
 
-        private class Day21KeypadValue
-        {
-            public int X { get; set; }
-            public int Y { get; set; }
-            public char Value { get; set; }
-        }
-
-        [TestMethod]
-        public void Day21_2()
-        {
-            List<string> doorCodes = File.ReadAllLines(@"Input\Day21.txt").ToList();
-            List<Day21KeypadValue> numericKeypad = new List<Day21KeypadValue>
-            {
-                new Day21KeypadValue{ X = 0, Y = 0, Value = '7' },
-                new Day21KeypadValue{ X = 1, Y = 0, Value = '8' },
-                new Day21KeypadValue{ X = 2, Y = 0, Value = '9' },
-                new Day21KeypadValue{ X = 0, Y = 1, Value = '4' },
-                new Day21KeypadValue{ X = 1, Y = 1, Value = '5' },
-                new Day21KeypadValue{ X = 2, Y = 1, Value = '6' },
-                new Day21KeypadValue{ X = 0, Y = 2, Value = '1' },
-                new Day21KeypadValue{ X = 1, Y = 2, Value = '2' },
-                new Day21KeypadValue{ X = 2, Y = 2, Value = '3' },
-                new Day21KeypadValue{ X = 1, Y = 3, Value = '0' },
-                new Day21KeypadValue{ X = 2, Y = 3, Value = 'A' },
-            };
-            List<Day21KeypadValue> directionalKeypad = new List<Day21KeypadValue>
-            {
-                new Day21KeypadValue{ X = 1, Y = 0, Value = '^' },
-                new Day21KeypadValue{ X = 2, Y = 0, Value = 'A' },
-                new Day21KeypadValue{ X = 0, Y = 1, Value = '<' },
-                new Day21KeypadValue{ X = 1, Y = 1, Value = 'v' },
-                new Day21KeypadValue{ X = 2, Y = 1, Value = '>' },
-            };
-            string humanCode = string.Empty;
-            long result = 0;
-            foreach (string code in doorCodes)
-            {
-                List<string> robot1Combinations = Day21_2TranslateCode(code.Substring(0, 1), numericKeypad);
-                Debug.WriteLine("I: " + 0 + " Length: " + robot1Combinations.Min(m => m.Length) + " Count: " + robot1Combinations.Count());
-                List<string> robot2Combinations = Day21RobotCombinations(robot1Combinations, directionalKeypad);
-                Debug.WriteLine("I: " + 1 + " Length: " + robot2Combinations.Min(m => m.Length) + " Count: " + robot2Combinations.Count());
-                List<string> robot3Combinations = Day21RobotCombinations(robot2Combinations, directionalKeypad);
-                Debug.WriteLine("I: " + 2 + " Length: " + robot3Combinations.Min(m => m.Length) + " Count: " + robot3Combinations.Count());
-                List<string> robot4Combinations = Day21RobotCombinations(robot3Combinations, directionalKeypad);
-                Debug.WriteLine("I: " + 3 + " Length: " + robot4Combinations.Min(m => m.Length) + " Count: " + robot4Combinations.Count());
-                List<string> robot5Combinations = Day21RobotCombinations(robot4Combinations, directionalKeypad);
-                Debug.WriteLine("I: " + 4 + " Length: " + robot5Combinations.Min(m => m.Length) + " Count: " + robot5Combinations.Count());
-
-                //double lenMultiplyer = robot3Combinations.Min(m => (double)m.Length) / robot2Combinations.Min(m => (double)m.Length);
-                //double combinationLength = robot3Combinations.Min(m => m.Length);
-                //for (int i = 0; i < 23; i++)
-                //    combinationLength *= lenMultiplyer;
-
-
-                //result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
-                //result += long.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * (long)combinationLength;
-            }
-            //foreach (string code in doorCodes)
-            //{
-            //    string robot1Combinations = Day21TranslateCodeOnlyFirstMathcing(code, numericKeypad);
-            //    //string robot2Combinations = Day21TranslateCodeOnlyFirstMathcing(robot1Combinations, directionalKeypad);
-            //    //string robot3Combinations = Day21TranslateCodeOnlyFirstMathcing(robot2Combinations, directionalKeypad);
-
-            //    string combination = robot1Combinations;
-            //    for (int i = 0; i < 25; i++)
-            //    {
-            //        combination = Day21TranslateCodeOnlyFirstMathcing(combination, directionalKeypad);
-            //        Debug.WriteLine("I: " + i + " Length: " + combination.Length + " " + combination);
-            //    }
-            //    //result += int.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * robot3Combinations.Min(m => m.Length);
-            //}
-            Debug.WriteLine(result); // 128339891365302 too low
-        }
-
-        private List<string> Day21RobotCombinations(List<string> previousRobotCombinations, List<Day21KeypadValue> keypad)
-        {
-            Dictionary<string, int> combinationLengths = new Dictionary<string, int>();
-            foreach (string combination in previousRobotCombinations)
-                combinationLengths.Add(combination, Day21CombinationLength(combination, keypad));
-            //List<string> returnCombinations = new List<string>();
-            //foreach (string combination in combinationLengths.Where(w => w.Value == combinationLengths.Min(m => m.Value)).Select(s => s.Key))
-            //    returnCombinations.AddRange(Day21_2TranslateCode(combination, keypad));
-            List<string> returnCombinations = new List<string>();
-            int minLength = combinationLengths.Min(m => m.Value);
-            Debug.WriteLine(combinationLengths.Where(w => w.Value == minLength).Count());
-            foreach (string combination in combinationLengths.Where(w => w.Value == minLength).Select(s => s.Key))
-            {
-                List<string> newCombinations = Day21_2TranslateCode(combination, keypad);
-                int newMinLength = newCombinations.Min(m => m.Length);
-                if (newMinLength > minLength)
-                    continue;
-                else if (newMinLength == minLength)
-                    returnCombinations.AddRange(newCombinations.Where(w => w.Length == minLength));
-                else
-                {
-                    minLength = newMinLength;
-                    returnCombinations = new List<string>();
-                    returnCombinations.AddRange(newCombinations.Where(w => w.Length == minLength));
-                }
-            }
-            return returnCombinations.Distinct().ToList();
-        }
-
-        private int Day21CombinationLength(string code, List<Day21KeypadValue> keypad)
-        {
-            string translation = string.Empty;
-            char previousKey = 'A';
-            foreach (char key in code)
-            {
-                translation += Day21_2TranslateKeyOnlyFirstMatching(previousKey, keypad, key, string.Empty);
-                previousKey = key;
-            }
-            return translation.Length;
-        }
-
-        private string Day21TranslateCodeOnlyFirstMatching(string code, List<Day21KeypadValue> keypad)
-        {
-            string translation = string.Empty;
-            char previousKey = 'A';
-            foreach (char key in code)
-            {
-                translation += Day21_2TranslateKeyOnlyFirstMatching(previousKey, keypad, key, string.Empty);
-                previousKey = key;
-            }
-            return translation;
-        }
-
-        private string Day21_2TranslateKeyOnlyFirstMatching(char currentLocationKey, List<Day21KeypadValue> keypad, char key, string translatedCode)
-        {
-            if (currentLocationKey == key)
-                return translatedCode + 'A';
-            Day21KeypadValue currentLocation = keypad.First(w => w.Value == currentLocationKey);
-            Day21KeypadValue target = keypad.First(w => w.Value == key);
-            Day21KeypadValue previousLocation;
-            previousLocation = currentLocation;
-            int currentDistance = Math.Abs(target.X - currentLocation.X) + Math.Abs(target.Y - currentLocation.Y);
-            Day21KeypadValue location = keypad.Where(w => (Math.Abs(w.X - currentLocation.X) + Math.Abs(w.Y - currentLocation.Y)) == 1
-                && (currentDistance - (Math.Abs(target.X - w.X) + Math.Abs(target.Y - w.Y))) == 1).First();
-            char move = previousLocation.X - location.X == 1 ? '<' : previousLocation.X - location.X == -1 ? '>' : previousLocation.Y - location.Y == 1 ? '^' : 'v';
-            if (location.Value == target.Value)
-                return translatedCode + move + "A";
-            else
-                return Day21_2TranslateKeyOnlyFirstMatching(location.Value, keypad, key, translatedCode + move);
-        }
-
-        private List<string> Day21_2TranslateCode(string code, List<Day21KeypadValue> keypad)
-        {
-            char previousKey = 'A';
-            List<string> possibleCombinations = new List<string>();
-            possibleCombinations.Add(string.Empty);
-            foreach (char key in code)
-            {
-                List<string> newCombinationList = new List<string>();
-                foreach (string combination in possibleCombinations)
-                    newCombinationList.AddRange(Day21_2TranslateKey(previousKey, keypad, key, combination));
-                previousKey = key;
-                possibleCombinations = newCombinationList;
-            }
-            return possibleCombinations;
-        }
-
-        private List<string> Day21_2TranslateKey(char currentLocationKey, List<Day21KeypadValue> keypad, char key, string translatedCode)
-        {
-            if (currentLocationKey == key)
-                return new List<string> { translatedCode + 'A' };
-            List<string> possibleTranslatedCodes = new List<string>();
-            Day21KeypadValue currentLocation = keypad.First(w => w.Value == currentLocationKey);
-            Day21KeypadValue target = keypad.First(w => w.Value == key);
-            Day21KeypadValue previousLocation;
-            previousLocation = currentLocation;
-            int currentDistance = Math.Abs(target.X - currentLocation.X) + Math.Abs(target.Y - currentLocation.Y);
-            List<Day21KeypadValue> possibleLocations = keypad.Where(w => (Math.Abs(w.X - currentLocation.X) + Math.Abs(w.Y - currentLocation.Y)) == 1
-                && (currentDistance - (Math.Abs(target.X - w.X) + Math.Abs(target.Y - w.Y))) == 1).ToList();
-            foreach (Day21KeypadValue location in possibleLocations)
-            {
-                char move = previousLocation.X - location.X == 1 ? '<' : previousLocation.X - location.X == -1 ? '>' : previousLocation.Y - location.Y == 1 ? '^' : 'v';
-                if (location.Value == target.Value)
-                    possibleTranslatedCodes.Add(translatedCode + move + "A");
-                else
-                    possibleTranslatedCodes.AddRange(Day21_2TranslateKey(location.Value, keypad, key, translatedCode + move));
-            }
-            return possibleTranslatedCodes;
-        }
-
-        [TestMethod]
-        public void Day22_1()
-        {
-            List<long> monkeys = File.ReadAllLines(@"Input\Day22.txt").Select(s => long.Parse(s)).ToList();
-            long sum = 0;
-            foreach (long monkey in monkeys)
-            {
-                long secretNumber = monkey;
-                for (int i = 0; i < 2000; i++)
-                {
-                    long step1 = (secretNumber ^ (secretNumber * 64)) % 16777216;
-                    long step2 = (step1 ^ (step1 / 32)) % 16777216;
-                    secretNumber = (step2 ^ (step2 * 2048)) % 16777216;
-                }
-                sum += secretNumber;
-            }
-            Debug.WriteLine(sum);
-        }
-
         [TestMethod]
         public void Day22_2()
         {
@@ -2585,8 +2389,14 @@ namespace AdventCalendar2024
                     change2 = change3;
                     change3 = change4;
                     change4 = (int)((step3 % 10) - (secretNumber % 10));
-                    secretList.Add(new Day22Secret { Value = step3, Change = (int)((step3 % 10) - (secretNumber % 10)), Price = (int)(step3 % 10)
-                        , Changes4 = change1 != null ? (change1 + "," + change2 + "," + change3 + "," + change4) : string.Empty });
+                    secretList.Add(new Day22Secret
+                    {
+                        Value = step3,
+                        Change = (int)((step3 % 10) - (secretNumber % 10)),
+                        Price = (int)(step3 % 10)
+                        ,
+                        Changes4 = change1 != null ? (change1 + "," + change2 + "," + change3 + "," + change4) : string.Empty
+                    });
                     secretNumber = step3;
                 }
                 sum += secretNumber;
@@ -2618,13 +2428,107 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day23_1()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day23.txt").ToList();
+            List<Day23Computer> computers = new List<Day23Computer>();
+            foreach (string input in inputList)
+            {
+                string computer1Name = input.Split('-')[0];
+                string computer2Name = input.Split('-')[1];
+                Day23Computer computer1 = computers.FirstOrDefault(w => w.Name == computer1Name);
+                if (computer1 == null)
+                {
+                    computer1 = new Day23Computer();
+                    computer1.Name = computer1Name;
+                    computers.Add(computer1);
+                }
+                Day23Computer computer2 = computers.FirstOrDefault(w => w.Name == computer2Name);
+                if (computer2 == null)
+                {
+                    computer2 = new Day23Computer();
+                    computer2.Name = computer2Name;
+                    computers.Add(computer2);
+                }
+                if (!computer1.Connections.Any(a => a == computer2))
+                    computer1.Connections.Add(computer2);
+                if (!computer2.Connections.Any(a => a == computer1))
+                    computer2.Connections.Add(computer1);
+            }
+            List<string> groups = new List<string>();
+            foreach (Day23Computer computer in computers.Where(w => w.Name.StartsWith('t')))
+            {
+                foreach (Day23Computer connection in computer.Connections)
+                {
+                    foreach (Day23Computer connectedConnection in connection.Connections.Where(w => computer.Connections.Contains(w)))
+                    {
+                        string group = string.Join(',', new List<Day23Computer> { computer, connection, connectedConnection }.OrderBy(o => o.Name).Select(s => s.Name).ToList());
+                        if (!groups.Any(a => a == group))
+                            groups.Add(group);
+                    };
+                }
+            }
+            Debug.WriteLine(groups.Count());
+        }
 
+        private class Day23Computer
+        {
+            public string Name { get; set; }
+            public List<Day23Computer> Connections = new List<Day23Computer>();
         }
 
         [TestMethod]
         public void Day23_2()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day23.txt").ToList();
+            List<Day23Computer> computers = new List<Day23Computer>();
+            foreach (string input in inputList)
+            {
+                string computer1Name = input.Split('-')[0];
+                string computer2Name = input.Split('-')[1];
+                Day23Computer computer1 = computers.FirstOrDefault(w => w.Name == computer1Name);
+                if (computer1 == null)
+                {
+                    computer1 = new Day23Computer();
+                    computer1.Name = computer1Name;
+                    computers.Add(computer1);
+                }
+                Day23Computer computer2 = computers.FirstOrDefault(w => w.Name == computer2Name);
+                if (computer2 == null)
+                {
+                    computer2 = new Day23Computer();
+                    computer2.Name = computer2Name;
+                    computers.Add(computer2);
+                }
+                if (!computer1.Connections.Any(a => a == computer2))
+                    computer1.Connections.Add(computer2);
+                if (!computer2.Connections.Any(a => a == computer1))
+                    computer2.Connections.Add(computer1);
+            }
+            List<Day23Computer> largestGroup = new List<Day23Computer>();
+            int largestGroupSize = 0;
+            foreach (Day23Computer computer in computers.OrderByDescending(d => d.Connections.Count()))
+            {
+                List<Day23Computer> group = (from g in computer.Connections select g).ToList();
+                group.Add(computer);
+                foreach (Day23Computer connection in computer.Connections.OrderByDescending(o => o.Connections.Where(w => group.Contains(w)).Count()))
+                {
+                    foreach (Day23Computer connectedConnection in group.Where(w => w != connection && !connection.Connections.Any(a => a == w)).ToArray())
+                    {
+                        if (connection.Connections.Where(w => group.Contains(w)).Count() > connectedConnection.Connections.Where(w => group.Contains(w)).Count())
+                            group.Remove(connectedConnection);
+                        else
+                        {
+                            group.Remove(connection);
+                            break;
+                        }
+                    }
+                }
+                if (group.Count() > largestGroupSize)
+                {
+                    largestGroupSize = group.Count();
+                    largestGroup = group;
+                }
+            }
+            Debug.WriteLine(string.Join(',', largestGroup.Select(s => s.Name).OrderBy(o => o)));
         }
 
         [TestMethod]
