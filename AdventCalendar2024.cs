@@ -2534,19 +2534,152 @@ namespace AdventCalendar2024
         [TestMethod]
         public void Day24_1()
         {
-
+            List<string> inputList = File.ReadAllLines(@"Input\Day24Test.txt").ToList();
+            List<Day24Wire> wires = new List<Day24Wire>();
+            List<Day24Gate> gates = new List<Day24Gate>();
+            bool isWiresRead = false;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    isWiresRead = true;
+                    continue;
+                }
+                if (!isWiresRead)
+                    wires.Add(new Day24Wire { Name = input.Split(':')[0], Value = int.Parse(new string(input.Split(':')[1].Trim())) == 1 });
+                else
+                {
+                    string[] inputSplit = input.Split(' ');
+                    gates.Add(new Day24Gate { LeftWireName = inputSplit[0], Operation = inputSplit[1], RightWireName = inputSplit[2], OutputWireName = inputSplit[4] });
+                }
+            }
+            wires = Day24CalculateWireValues(wires, gates, false);
+            long z = Convert.ToInt64(new string(wires.Where(w => w.Name.Contains('z')).OrderByDescending(o => o.Name).Select(s => s.Value ? '1' : '0').ToArray()), 2);
+            Debug.WriteLine(z);
         }
 
-        [TestMethod]
-        public void Day24_2()
+        private List<Day24Wire> Day24CalculateWireValues(List<Day24Wire> wires, List<Day24Gate> gates, bool includeAllWiresInResult)
         {
+            List<Day24Wire> outputWires = (from w in wires select w).ToList();
+            while (gates.Any())
+            {
+                Day24Gate gate = gates.FirstOrDefault(w => outputWires.Any(a => a.Name == w.LeftWireName && outputWires.Any(n => n.Name == w.RightWireName)));
+                if (gate == null)
+                    return null;
+                Day24Wire leftWire = outputWires.First(w => w.Name == gate.LeftWireName);
+                Day24Wire rightWire = outputWires.First(w => w.Name == gate.RightWireName);
+                if (gate.Operation == "AND")
+                    outputWires.Add(new Day24Wire { Name = gate.OutputWireName, Value = leftWire.Value && rightWire.Value });
+                else if (gate.Operation == "OR")
+                    outputWires.Add(new Day24Wire { Name = gate.OutputWireName, Value = leftWire.Value || rightWire.Value });
+                else
+                    outputWires.Add(new Day24Wire { Name = gate.OutputWireName, Value = leftWire.Value != rightWire.Value });
+                gates.Remove(gate);
+            }
+            if (includeAllWiresInResult)
+                return outputWires;
+            else
+                return outputWires.Where(w => w.Name.StartsWith('z')).ToList();
+        }
 
+        public class Day24Wire
+        {
+            public string Name { get; set; }
+            public bool Value { get; set; }
+        }
+
+        public class Day24Gate
+        {
+            public string LeftWireName { get; set; }
+            public string RightWireName { get; set; }
+            public string OutputWireName { get; set; }
+            public string Operation { get; set; }
         }
 
         [TestMethod]
         public void Day25()
         {
+            List<string> inputList = File.ReadAllLines(@"Input\Day25.txt").ToList();
+            bool newItem = true;
+            bool isLock = false;
+            List<Day25Lock> lockList = new List<Day25Lock>();
+            List<Day25Key> keyList = new List<Day25Key>();
+            Day25Lock newLock = new Day25Lock();
+            Day25Key newKey = new Day25Key();
+            foreach (string input in inputList)
+            {
+                if (newItem)
+                {
+                    isLock = input.All(a => a == '#');
+                    if (isLock)
+                    {
+                        newLock = new Day25Lock();
+                        lockList.Add(newLock);
+                    }
+                    else
+                    {
+                        newKey = new Day25Key();
+                        keyList.Add(newKey);
+                    }
+                    newItem = false;
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    newItem = true;
+                    continue;
+                }
+                if (isLock)
+                {
+                    if (input[0] == '#')
+                        newLock.Height1++;
+                    if (input[1] == '#')
+                        newLock.Height2++;
+                    if (input[2] == '#')
+                        newLock.Height3++;
+                    if (input[3] == '#')
+                        newLock.Height4++;
+                    if (input[4] == '#')
+                        newLock.Height5++;
+                }
+                else
+                {
+                    if (input[0] == '#')
+                        newKey.Height1++;
+                    if (input[1] == '#')
+                        newKey.Height2++;
+                    if (input[2] == '#')
+                        newKey.Height3++;
+                    if (input[3] == '#')
+                        newKey.Height4++;
+                    if (input[4] == '#')
+                        newKey.Height5++;
+                }
+            }
+            int maxHeight = 6;
+            int sum = 0;
+            foreach (Day25Lock l in lockList)
+                sum += keyList.Count(w => w.Height1 + l.Height1 <= maxHeight && w.Height2 + l.Height2 <= maxHeight && w.Height3 + l.Height3 <= maxHeight
+                    && w.Height4 + l.Height4 <= maxHeight && w.Height5 + l.Height5 <= maxHeight);
+            Debug.WriteLine(sum);
+        }
 
+        private class Day25Lock
+        {
+            public int Height1 { get; set; }
+            public int Height2 { get; set; }
+            public int Height3 { get; set; }
+            public int Height4 { get; set; }
+            public int Height5 { get; set; }
+        }
+
+        private class Day25Key
+        {
+            public int Height1 { get; set; }
+            public int Height2 { get; set; }
+            public int Height3 { get; set; }
+            public int Height4 { get; set; }
+            public int Height5 { get; set; }
         }
     }
 }
