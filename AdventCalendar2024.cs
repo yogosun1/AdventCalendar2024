@@ -2597,6 +2597,158 @@ namespace AdventCalendar2024
         }
 
         [TestMethod]
+        public void Day24_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day24.txt").ToList();
+            List<Day24Wire> inputWires = new List<Day24Wire>();
+            List<Day24Gate> gates = new List<Day24Gate>();
+            List<string> outputWireNames = new List<string>();
+            bool isWiresRead = false;
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    isWiresRead = true;
+                    continue;
+                }
+                if (!isWiresRead)
+                    inputWires.Add(new Day24Wire { Name = input.Split(':')[0], Value = int.Parse(new string(input.Split(':')[1].Trim())) == 1 });
+                else
+                {
+                    string[] inputSplit = input.Split(' ');
+                    gates.Add(new Day24Gate { LeftWireName = inputSplit[0], Operation = inputSplit[1], RightWireName = inputSplit[2], OutputWireName = inputSplit[4] });
+                    outputWireNames.Add(inputSplit[4]);
+                }
+            }
+            long x = Convert.ToInt64(new string(inputWires.Where(w => w.Name.Contains('x')).OrderByDescending(o => o.Name)
+                .Select(s => s.Value ? '1' : '0').ToArray()), 2);
+            long y = Convert.ToInt64(new string(inputWires.Where(w => w.Name.Contains('y')).OrderByDescending(o => o.Name)
+                .Select(s => s.Value ? '1' : '0').ToArray()), 2);
+            List<Day24Gate> newGates = new List<Day24Gate>();
+            List<Day24Wire> outputWires = Day24CalculateWireValues(inputWires, (from g in gates select g).ToList(), true);
+            List<bool> zExpectedResultList = Convert.ToString(x + y, 2).PadLeft(outputWires.Where(w => w.Name.StartsWith('z')).Count(), '0').Select(s => s == '1').Reverse().ToList();
+            List<string> goodWires = new List<string>();
+            List<string> maybeBadWires = new List<string>();
+            List<string> swappedGateOutputs = new List<string>();
+            foreach (Day24Gate gate in gates.Where(w => w.OutputWireName.StartsWith('z')).OrderBy(o => o.OutputWireName))
+            {
+                int zIndex = int.Parse(new string(gate.OutputWireName.Skip(1).ToArray()));
+                int zErrorIndex = Day24_2_3TestGates(inputWires, gates, zIndex);
+                if (zIndex == zErrorIndex)
+                {
+                    maybeBadWires.AddRange(Day24GetInputWires(gate, gates, outputWires).Except(goodWires));
+                    Tuple<string, string> swap = Day24_2_3FindGoodSwap(gates, inputWires, maybeBadWires, outputWireNames.Except(goodWires).ToList(), zErrorIndex);
+                    Day24SwapGateOutput(swap.Item1 + "-" + swap.Item2, gates);
+                    outputWires = Day24CalculateWireValues(inputWires, (from g in gates select g).ToList(), true);
+                    goodWires.AddRange(Day24GetInputWires(gate, gates, outputWires));
+                    goodWires = goodWires.Distinct().ToList();
+                    swappedGateOutputs.Add(swap.Item1);
+                    swappedGateOutputs.Add(swap.Item2);
+                    Debug.WriteLine("zIndex: " + zIndex + " Swapped: " + swap.Item1 + " with " + swap.Item2);
+                }
+                else
+                {
+                    goodWires.AddRange(Day24GetInputWires(gate, gates, outputWires));
+                    goodWires = goodWires.Distinct().ToList();
+                }
+            }
+            Debug.WriteLine(string.Join(',', swappedGateOutputs.OrderBy(o => o)));
+        }
+
+        private void Day24SwapGateOutput(string swap, List<Day24Gate> gates)
+        {
+            Day24Gate firstGate = gates.First(w => w.OutputWireName == swap.Split('-')[0]);
+            Day24Gate secondGate = gates.First(w => w.OutputWireName == swap.Split('-')[1]);
+            string tempGate = firstGate.OutputWireName;
+            firstGate.OutputWireName = secondGate.OutputWireName;
+            secondGate.OutputWireName = tempGate;
+        }
+
+        private Tuple<string, string> Day24_2_3FindGoodSwap(List<Day24Gate> gates, List<Day24Wire> inputWires, List<string> swapWireList, List<string> allowedWireSwapList, int errorIndex)
+        {
+            List<Day24Gate> newGates;
+            List<string> swappedGateOutputNames = new List<string>();
+            for (int i1 = 0; i1 < swapWireList.Count(); i1++)
+            {
+                for (int i2 = 0; i2 < allowedWireSwapList.Count(); i2++)
+                {
+                    newGates = (from g in gates
+                                select new Day24Gate
+                                {
+                                    LeftWireName = g.LeftWireName,
+                                    Operation = g.Operation,
+                                    OutputWireName = g.OutputWireName,
+                                    RightWireName = g.RightWireName
+                                }).ToList();
+                    string tempGate;
+                    Day24Gate firstGate = newGates.First(w => w.OutputWireName == swapWireList[i1]);
+                    Day24Gate secondGate = newGates.First(w => w.OutputWireName == allowedWireSwapList[i2]);
+                    tempGate = firstGate.OutputWireName;
+                    firstGate.OutputWireName = secondGate.OutputWireName;
+                    secondGate.OutputWireName = tempGate;
+                    int zErrorIndex = Day24_2_3TestGates(inputWires, newGates, errorIndex);
+                    if (zErrorIndex > errorIndex)
+                        return new Tuple<string, string>(swapWireList[i1], allowedWireSwapList[i2]);
+                }
+            }
+            return null;
+        }
+
+        private int Day24_2_3TestGates(List<Day24Wire> inputWires, List<Day24Gate> gates, int previousBest)
+        {
+            int minBadBit = int.MaxValue;
+            for (int tests = 0; tests < 50; tests++)
+            {
+                foreach (Day24Wire inputWire in inputWires)
+                    inputWire.Value = Random.Shared.Next(0, 2) == 1;
+                long x = Convert.ToInt64(new string(inputWires.Where(w => w.Name.Contains('x')).OrderByDescending(o => o.Name)
+                    .Select(s => s.Value ? '1' : '0').ToArray()), 2);
+                long y = Convert.ToInt64(new string(inputWires.Where(w => w.Name.Contains('y')).OrderByDescending(o => o.Name)
+                    .Select(s => s.Value ? '1' : '0').ToArray()), 2);
+                long targetValue = x + y;
+                List<Day24Wire> outputWires = Day24CalculateWireValues(inputWires, (from g in gates select g).ToList(), false);
+                if (outputWires == null)
+                    return 0;
+                List<bool> zExpectedResultList = Convert.ToString(x + y, 2).PadLeft(outputWires.Count(), '0').Select(s => s == '1').Reverse().ToList();
+                int matches = 0;
+                outputWires = outputWires.OrderBy(o => o.Name).ToList();
+                for (int i = 0; i < outputWires.Count(); i++)
+                {
+                    if (outputWires[i].Value != zExpectedResultList[i])
+                        break;
+                    else
+                        matches++;
+                }
+                if (minBadBit > matches)
+                    minBadBit = matches;
+                if (previousBest >= minBadBit)
+                    return previousBest;
+            }
+            return minBadBit;
+        }
+
+        private List<string> Day24GetInputWires(Day24Gate gate, List<Day24Gate> gates, List<Day24Wire> outputWires)
+        {
+            List<string> interestingWireList = new List<string>();
+            interestingWireList.Add(gate.OutputWireName);
+            Day24Wire outputWire = outputWires.First(w => w.Name == gate.OutputWireName);
+            Day24Wire leftWire = outputWires.First(w => w.Name == gate.LeftWireName);
+            Day24Wire rightWire = outputWires.First(w => w.Name == gate.RightWireName);
+            if (!leftWire.Name.StartsWith('x') && !leftWire.Name.StartsWith('y'))
+            {
+                Day24Gate leftGate = gates.First(w => w.OutputWireName == leftWire.Name);
+                interestingWireList.AddRange(Day24GetInputWires(leftGate, gates, outputWires));
+            }
+            if (!rightWire.Name.StartsWith('x') && !rightWire.Name.StartsWith('y'))
+            {
+                Day24Gate rightGate = gates.First(w => w.OutputWireName == rightWire.Name);
+                interestingWireList.AddRange(Day24GetInputWires(rightGate, gates, outputWires));
+            }
+            return interestingWireList.Distinct().ToList();
+        }
+
+
+        [TestMethod]
         public void Day25()
         {
             List<string> inputList = File.ReadAllLines(@"Input\Day25.txt").ToList();
