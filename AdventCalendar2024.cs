@@ -2369,6 +2369,110 @@ namespace AdventCalendar2024
             return possibleTranslatedCodes;
         }
 
+        private Dictionary<(char current, char target), List<string>> _day21KnownDirectionalMoves = null;
+        private Dictionary<(char current, char target), List<string>> _day21KnownNumericMoves = null;
+        private Dictionary<(char current, char target, int layer), long> _day21KnownShortestCombinationLength = new Dictionary<(char current, char target, int layer), long>();
+
+        [TestMethod]
+        public void Day21_2()
+        {
+            List<string> doorCodes = File.ReadAllLines(@"Input\Day21.txt").ToList();
+            List<Day21KeypadValue> numericKeypad = new List<Day21KeypadValue>
+            {
+                new Day21KeypadValue{ X = 0, Y = 0, Value = '7' },
+                new Day21KeypadValue{ X = 1, Y = 0, Value = '8' },
+                new Day21KeypadValue{ X = 2, Y = 0, Value = '9' },
+                new Day21KeypadValue{ X = 0, Y = 1, Value = '4' },
+                new Day21KeypadValue{ X = 1, Y = 1, Value = '5' },
+                new Day21KeypadValue{ X = 2, Y = 1, Value = '6' },
+                new Day21KeypadValue{ X = 0, Y = 2, Value = '1' },
+                new Day21KeypadValue{ X = 1, Y = 2, Value = '2' },
+                new Day21KeypadValue{ X = 2, Y = 2, Value = '3' },
+                new Day21KeypadValue{ X = 1, Y = 3, Value = '0' },
+                new Day21KeypadValue{ X = 2, Y = 3, Value = 'A' },
+            };
+            List<Day21KeypadValue> directionalKeypad = new List<Day21KeypadValue>
+            {
+                new Day21KeypadValue{ X = 1, Y = 0, Value = '^' },
+                new Day21KeypadValue{ X = 2, Y = 0, Value = 'A' },
+                new Day21KeypadValue{ X = 0, Y = 1, Value = '<' },
+                new Day21KeypadValue{ X = 1, Y = 1, Value = 'v' },
+                new Day21KeypadValue{ X = 2, Y = 1, Value = '>' },
+            };
+            string humanCode = string.Empty;
+            long result = 0;
+            _day21KnownDirectionalMoves = Day21_2GenerateKnownMoves(directionalKeypad);
+            _day21KnownNumericMoves = Day21_2GenerateKnownMoves(numericKeypad);
+            foreach (string code in doorCodes)
+            {
+                long translatedCodeLength = Day21_2TranslateCode(code, 0, 26);
+                Debug.WriteLine("Length: " + translatedCodeLength);
+                result += long.Parse(new string(code.Where(w => char.IsDigit(w)).ToArray())) * translatedCodeLength;
+            }
+            Debug.WriteLine(result);
+        }
+
+        private Dictionary<(char current, char target), List<string>> Day21_2GenerateKnownMoves(List<Day21KeypadValue> keypad)
+        {
+            Dictionary<(char current, char target), List<string>> knownMoves = new Dictionary<(char current, char target), List<string>>();
+            foreach (Day21KeypadValue key in keypad)
+                foreach (Day21KeypadValue moveTo in keypad)
+                    knownMoves.Add((key.Value, moveTo.Value), Day21_2TranslateMove(key.Value, keypad, moveTo.Value));
+            return knownMoves;
+        }
+
+        private List<string> Day21_2TranslateMove(char currentKey, List<Day21KeypadValue> keypad, char key)
+        {
+            if (currentKey == key)
+                return new List<string> { "A" };
+            List<string> possibleTranslatedCodes = new List<string>();
+            Day21KeypadValue current = keypad.First(w => w.Value == currentKey);
+            Day21KeypadValue target = keypad.First(w => w.Value == key);
+            Day21KeypadValue previous;
+            previous = current;
+            int currentDistance = Math.Abs(target.X - current.X) + Math.Abs(target.Y - current.Y);
+            List<Day21KeypadValue> possibleLocations = keypad.Where(w => (Math.Abs(w.X - current.X) + Math.Abs(w.Y - current.Y)) == 1
+                && (currentDistance - (Math.Abs(target.X - w.X) + Math.Abs(target.Y - w.Y))) == 1).ToList();
+            foreach (Day21KeypadValue location in possibleLocations)
+            {
+                char move = previous.X - location.X == 1 ? '<' : previous.X - location.X == -1 ? '>' : previous.Y - location.Y == 1 ? '^' : 'v';
+                if (location.Value == target.Value)
+                    possibleTranslatedCodes.Add(move + "A");
+                else
+                    possibleTranslatedCodes.AddRange(Day21_2TranslateMove(location.Value, keypad, key).Select(s => move + s));
+            }
+            return possibleTranslatedCodes;
+        }
+
+        private long Day21_2TranslateCode(string code, int layer, int maxLayers)
+        {
+            if (layer == maxLayers)
+                return code.Length;
+            long translatedCodeLength = 0;
+            char current = 'A';
+            foreach (char target in code)
+            {
+                long bestCombinationLength = long.MaxValue;
+                if (_day21KnownShortestCombinationLength.TryGetValue((current, target, layer), out long knownCombinationLength))
+                    bestCombinationLength = knownCombinationLength;
+                else
+                {
+                    List<string> combinations = layer == 0 ? _day21KnownNumericMoves[(current, target)] : _day21KnownDirectionalMoves[(current, target)];
+                    foreach (string combination in combinations)
+                    {
+                        long shortestCombinationLength = Day21_2TranslateCode(combination, layer + 1, maxLayers);
+                        if (shortestCombinationLength < bestCombinationLength)
+                            bestCombinationLength = shortestCombinationLength;
+                    }
+                    _day21KnownShortestCombinationLength.Add((current, target, layer), bestCombinationLength);
+                }
+                translatedCodeLength += bestCombinationLength;
+                current = target;
+            }
+            return translatedCodeLength;
+        }
+
+
         [TestMethod]
         public void Day22_2()
         {
